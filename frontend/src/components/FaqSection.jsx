@@ -129,9 +129,9 @@ function FeaturesSection() {
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   return (
-    <section className="relative mt-20 overflow-hidden">
+    <section className="relative mt-20">
       {/* Ambient Gradient Glows */}
-      <div className="absolute inset-0 pointer-events-none opacity-20">
+      <div className="absolute inset-0 pointer-events-none opacity-20 overflow-hidden">
         <div className="absolute top-0 left-1/4 w-80 h-80 bg-orange-300 rounded-full blur-3xl" />
         <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-purple-300 rounded-full blur-3xl" />
       </div>

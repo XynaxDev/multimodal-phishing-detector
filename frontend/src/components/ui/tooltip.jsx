@@ -109,7 +109,7 @@ export default function Tooltip({
             animate={currentVariant.animate}
             exit={currentVariant.exit}
             transition={{ duration: 0.12, ease: "easeOut" }}
-            className={`pointer-events-none absolute z-50 hidden md:block rounded-lg border border-slate-700/60 bg-slate-900/95 px-2.5 py-1.5 text-[11px] font-medium text-slate-100 shadow-xl backdrop-blur-md select-none whitespace-nowrap ${positionClasses[position]} ${className}`}
+            className={`pointer-events-none absolute z-50 hidden md:block rounded-lg border border-slate-700/60 bg-slate-900/95 px-3 py-1.5 text-[11px] font-medium text-slate-100 shadow-xl backdrop-blur-md select-none w-max max-w-[260px] sm:max-w-[300px] text-center leading-snug whitespace-normal ${positionClasses[position]} ${className}`}
           >
             {content}
             <div className={`absolute h-0 w-0 pointer-events-none ${arrowClasses[position]}`} />
