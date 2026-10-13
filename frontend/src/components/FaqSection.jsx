@@ -1,6 +1,8 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ChevronDown, Shield, Zap, Globe, Brain, Lock, Sparkles, ArrowRight } from "lucide-react";
+import SendMatrixIcon from "./ui/SendMatrixIcon";
 
 const faqs = [
   {
@@ -31,59 +33,106 @@ const faqs = [
 
 const features = [
   {
-    icon: <Brain className="h-6 w-6" />,
+    id: "ai-powered",
+    icon: <Brain className="h-5 w-5 sm:h-6 sm:w-6" />,
     title: "AI-Powered Analysis",
-    description: "Advanced machine learning models for intelligent phishing detection"
+    description: "Advanced machine learning models for intelligent phishing detection",
+    tag: "Deep Learning",
+    colorFamily: "purple",
+    iconBox: "bg-purple-100 text-purple-600",
+    badge: "bg-purple-100 text-purple-800 border-purple-200",
+    selectedBg: "bg-purple-50/95",
+    selectedBorder: "border-purple-400",
+    selectedRing: "ring-1 ring-purple-300",
+    selectedShadow: "shadow-purple-100/60",
+    hoverBg: "hover:bg-purple-50/60 hover:border-purple-300",
   },
   {
-    icon: <Zap className="h-6 w-6" />,
+    id: "real-time",
+    icon: <Zap className="h-5 w-5 sm:h-6 sm:w-6 fill-current" />,
     title: "Real-Time Results",
-    description: "Get instant analysis with sub-second response times"
+    description: "Get instant analysis with sub-second response times",
+    tag: "< 500ms",
+    colorFamily: "orange",
+    iconBox: "bg-orange-100 text-orange-600",
+    badge: "bg-orange-100 text-orange-800 border-orange-200",
+    selectedBg: "bg-orange-50/95",
+    selectedBorder: "border-orange-400",
+    selectedRing: "ring-1 ring-orange-300",
+    selectedShadow: "shadow-orange-100/60",
+    hoverBg: "hover:bg-orange-50/60 hover:border-orange-300",
   },
   {
-    icon: <Shield className="h-6 w-6" />,
+    id: "multimodal",
+    icon: <Shield className="h-5 w-5 sm:h-6 sm:w-6" />,
     title: "Multimodal Detection",
-    description: "Analyze text, images, URLs, and chat simultaneously"
+    description: "Analyze text, images, URLs, and chat simultaneously",
+    tag: "Vision + Text",
+    colorFamily: "sky",
+    iconBox: "bg-sky-100 text-sky-600",
+    badge: "bg-sky-100 text-sky-800 border-sky-200",
+    selectedBg: "bg-sky-50/95",
+    selectedBorder: "border-sky-400",
+    selectedRing: "ring-1 ring-sky-300",
+    selectedShadow: "shadow-sky-100/60",
+    hoverBg: "hover:bg-sky-50/60 hover:border-sky-300",
   },
   {
-    icon: <Lock className="h-6 w-6" />,
+    id: "privacy",
+    icon: <Lock className="h-5 w-5 sm:h-6 sm:w-6" />,
     title: "Privacy First",
-    description: "Your data is processed in-memory with zero storage"
+    description: "Your data is processed in-memory with zero storage",
+    tag: "Zero Storage",
+    colorFamily: "emerald",
+    iconBox: "bg-emerald-100 text-emerald-600",
+    badge: "bg-emerald-100 text-emerald-800 border-emerald-200",
+    selectedBg: "bg-emerald-50/95",
+    selectedBorder: "border-emerald-400",
+    selectedRing: "ring-1 ring-emerald-300",
+    selectedShadow: "shadow-emerald-100/60",
+    hoverBg: "hover:bg-emerald-50/60 hover:border-emerald-300",
   },
   {
-    icon: <Globe className="h-6 w-6" />,
+    id: "global",
+    icon: <Globe className="h-5 w-5 sm:h-6 sm:w-6" />,
     title: "Global Coverage",
-    description: "Detect phishing attempts in multiple languages and formats"
+    description: "Detect phishing attempts in multiple languages and formats",
+    tag: "Multilingual",
+    colorFamily: "indigo",
+    iconBox: "bg-indigo-100 text-indigo-600",
+    badge: "bg-indigo-100 text-indigo-800 border-indigo-200",
+    selectedBg: "bg-indigo-50/95",
+    selectedBorder: "border-indigo-400",
+    selectedRing: "ring-1 ring-indigo-300",
+    selectedShadow: "shadow-indigo-100/60",
+    hoverBg: "hover:bg-indigo-50/60 hover:border-indigo-300",
   },
   {
-    icon: <Sparkles className="h-6 w-6" />,
+    id: "scoring",
+    icon: <Sparkles className="h-5 w-5 sm:h-6 sm:w-6" />,
     title: "Smart Scoring",
-    description: "Confidence scores and detailed threat analysis"
-  }
+    description: "Confidence scores and detailed threat analysis",
+    tag: "Explainable",
+    colorFamily: "rose",
+    iconBox: "bg-rose-100 text-rose-600",
+    badge: "bg-rose-100 text-rose-800 border-rose-200",
+    selectedBg: "bg-rose-50/95",
+    selectedBorder: "border-rose-400",
+    selectedRing: "ring-1 ring-rose-300",
+    selectedShadow: "shadow-rose-100/60",
+    hoverBg: "hover:bg-rose-50/60 hover:border-rose-300",
+  },
 ];
 
 function FeaturesSection() {
+  const [selectedIndex, setSelectedIndex] = useState(0);
+
   return (
     <section className="relative mt-20 overflow-hidden">
-      {/* Geometric Background */}
-      <div className="absolute inset-0 opacity-5">
-        <div className="absolute top-0 left-0 w-64 h-64 bg-orange-500 rounded-full blur-3xl" />
-        <div className="absolute top-20 right-0 w-96 h-96 bg-orange-400 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-1/2 w-80 h-80 bg-purple-500 rounded-full blur-3xl" />
-        <div className="absolute top-1/2 left-0 w-72 h-72 bg-orange-300 rounded-full blur-3xl" />
-        <div className="absolute bottom-20 right-1/3 w-88 h-88 bg-red-500 rounded-full blur-3xl" />
-      </div>
-      
-      {/* Geometric Pattern */}
-      <div className="absolute inset-0">
-        <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="currentColor" strokeWidth="0.5" className="text-slate-200" />
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#grid)" />
-        </svg>
+      {/* Ambient Gradient Glows */}
+      <div className="absolute inset-0 pointer-events-none opacity-20">
+        <div className="absolute top-0 left-1/4 w-80 h-80 bg-orange-300 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-purple-300 rounded-full blur-3xl" />
       </div>
 
       <div className="relative max-w-3xl mx-auto px-4">
@@ -92,48 +141,98 @@ function FeaturesSection() {
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           viewport={{ once: true }}
-          className="text-center mb-12"
+          className="text-center mb-10"
         >
-          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-4">
-            Why Choose <span className="text-orange-500">PH5</span>?
+          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-3 inline-flex items-center justify-center flex-wrap">
+            <span>Why Choose</span>
+            <img
+              src="/logo.png"
+              alt="PH5"
+              className="inline-block h-[1.15em] w-auto object-contain align-middle -mt-1 mx-2"
+            />
+            <span>?</span>
           </h2>
-          <p className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto px-4">
+          <p className="text-sm sm:text-base text-slate-600 max-w-2xl mx-auto px-4">
             Experience the future of phishing detection with our cutting-edge multimodal AI technology
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-          {features.map((feature, index) => (
-            <motion.div
-              key={feature.title}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1, duration: 0.3 }}
-              viewport={{ once: true }}
-              className="group"
-            >
-              <div className="h-full p-4 sm:p-6 rounded-2xl border border-slate-200 bg-white/50 backdrop-blur-sm hover:bg-white hover:shadow-lg hover:border-orange-200 transition-all duration-300">
-                <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-orange-100 text-orange-600 mb-4 group-hover:scale-110 transition-transform duration-300">
-                  {feature.icon}
+        {/* Uniform Equal-Sized Feature Cards with Distinct Color Families */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4.5">
+          {features.map((feature, index) => {
+            const isSelected = selectedIndex === index;
+            return (
+              <motion.div
+                key={feature.title}
+                initial={{ opacity: 0, y: 15 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.08, duration: 0.3 }}
+                viewport={{ once: true }}
+                onClick={() => setSelectedIndex(index)}
+                className={`relative h-[210px] w-full flex flex-col justify-between p-4 sm:p-5 rounded-2xl border transition-all duration-200 cursor-pointer overflow-hidden select-none ${
+                  isSelected
+                    ? `${feature.selectedBg} ${feature.selectedBorder} ${feature.selectedRing} shadow-md ${feature.selectedShadow} scale-[1.01]`
+                    : `border-slate-200/90 bg-white/90 text-slate-700 ${feature.hoverBg} hover:shadow-sm`
+                }`}
+              >
+
+                {/* Top Row: Icon + Badge */}
+                <div className="relative z-10 flex items-center justify-between gap-2 w-full">
+                  <div
+                    className={`flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 rounded-xl transition-transform duration-200 ${
+                      isSelected ? `${feature.iconBox} shadow-xs scale-105` : `${feature.iconBox}`
+                    }`}
+                  >
+                    {feature.icon}
+                  </div>
+
+                  <span
+                    className={`inline-block whitespace-nowrap rounded-full border px-2 py-0.5 text-[10px] sm:text-[11px] font-semibold tracking-wide ${
+                      isSelected ? feature.badge : "bg-slate-50 text-slate-600 border-slate-200"
+                    }`}
+                  >
+                    {feature.tag}
+                  </span>
                 </div>
-                <h3 className="text-base sm:text-lg font-semibold text-slate-900 mb-2">{feature.title}</h3>
-                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">{feature.description}</p>
-              </div>
-            </motion.div>
-          ))}
+
+                {/* Middle: Title & Description */}
+                <div className="relative z-10 flex-1 flex flex-col justify-center my-1.5">
+                  <h3 className="text-sm sm:text-base font-bold text-slate-900 mb-1 tracking-tight">
+                    {feature.title}
+                  </h3>
+                  <p className="text-xs sm:text-[13px] text-slate-600 leading-snug">
+                    {feature.description}
+                  </p>
+                </div>
+
+                {/* Bottom Row: Active Indicator */}
+                <div className="relative z-10 pt-2 border-t border-slate-100/90 flex items-center justify-between text-[11px]">
+                  <span className={`font-semibold ${isSelected ? "text-slate-800" : "text-slate-400"}`}>
+                    {isSelected ? "Active Feature" : "Click to view"}
+                  </span>
+                  <div
+                    className={`w-2 h-2 rounded-full transition-all ${
+                      isSelected ? "bg-slate-800 scale-125" : "bg-slate-300"
+                    }`}
+                  />
+                </div>
+              </motion.div>
+            );
+          })}
         </div>
 
+        {/* Bottom Banner */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 15 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6, duration: 0.3 }}
+          transition={{ delay: 0.5, duration: 0.3 }}
           viewport={{ once: true }}
-          className="text-center mt-12"
+          className="text-center mt-10"
         >
-          <div className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-orange-100 text-orange-700 font-medium">
-            <Sparkles className="h-4 w-4" />
-            <span>Powered by Advanced AI Technology</span>
-            <ArrowRight className="h-4 w-4" />
+          <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-orange-50 border border-orange-200/80 text-orange-700 text-xs sm:text-sm font-semibold shadow-2xs">
+            <Sparkles className="h-4 w-4 text-orange-600 shrink-0" />
+            <span>Powered by Advanced Multimodal AI Technology</span>
+            <SendMatrixIcon className="h-3.5 w-3.5 fill-current text-orange-600 shrink-0 ml-0.5" />
           </div>
         </motion.div>
       </div>
@@ -227,13 +326,13 @@ export default function FaqSection() {
             className="text-center mt-12"
           >
             <p className="text-sm sm:text-base text-slate-600 mb-4">Still have questions?</p>
-            <a
-              href="/docs"
-              className="inline-flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200 text-sm sm:text-base"
+            <Link
+              to="/docs"
+              className="inline-flex items-center gap-2 px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200 text-sm sm:text-base group"
             >
-              Visit Documentation
-              <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4" />
-            </a>
+              <span>Visit Documentation</span>
+              <SendMatrixIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white transition-transform group-hover:translate-x-0.5" />
+            </Link>
           </motion.div>
         </div>
       </section>

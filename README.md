@@ -95,26 +95,36 @@ Evaluation results from comprehensive testing:
 ---
 
 ## Project Structure
-
-### Backend Components
+### Backend Architecture (Modular & Scalable)
 
 ```
 backend/
 ├── app/
-│   ├── main.py              # FastAPI routes and endpoints
-│   ├── models_loader.py     # Model initialization and loading
-│   ├── predictors.py        # Text/URL/Image inference logic
-│   ├── intent.py            # Multimodal intent detection
-│   └── llm_helpers.py       # LLM-based explanations
+│   ├── main.py              # FastAPI application factory & lifespan
+│   ├── schemas.py           # Pydantic v2 request/response models
+│   ├── core/                # Central config, error handlers & logging
+│   │   ├── config.py
+│   │   ├── errors.py
+│   │   └── logging.py
+│   ├── api/                 # Versioned REST routing (/api/v1) & legacy aliases
+│   │   ├── router.py
+│   │   ├── deps.py
+│   │   └── routes/
+│   │       ├── analyze.py   # /analyze/text, /url, /image, /multimodal
+│   │       ├── chat.py      # /chat conversational intent-routing
+│   │       ├── system.py    # /health and /status diagnostics
+│   │       └── legacy.py    # Legacy backward-compatibility aliases
+│   └── services/            # Clean business logic & model layer
+│       ├── model_registry.py # Lazy thread-safe weights manager
+│       ├── inference.py     # PyTorch BERT, DistilBERT, ResNet-50
+│       ├── fusion.py        # Calibrated late-fusion logic (α=0.8)
+│       ├── llm.py           # Groq LLM client (Qwen 3.8 27B)
+│       ├── ocr.py           # Optional Tesseract / n8n OCR engine
+│       └── analysis.py      # Orchestrator service
+├── tests/                   # Automated pytest suite
+├── Dockerfile               # Production container for Render deployment
+└── requirements.txt         # Lightweight inference dependencies
 ```
-
-### Key Modules
-
-- **main.py** - API routes for inference and chat
-- **models_loader.py** - Loads BERT, DistilBERT, and ResNet50 models
-- **predictors.py** - Handles predictions for each modality
-- **intent.py** - Combines multimodal signals for final detection
-- **llm_helpers.py** - Generates safe, constrained explanations
 
 ---
 
@@ -211,7 +221,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 <div align="center">
 
-**Made with care 💌 by Akash**
+**Made with care 💌 by Akash Kumar Sah (2301010109, BTech CSE Sec B)**
 
 _If you find this project helpful, please consider giving it a star ⭐_
 

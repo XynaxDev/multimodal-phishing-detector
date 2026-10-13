@@ -37,6 +37,7 @@ htmlcov/
 # IDEs
 .idea/
 .vscode/
+.history/
 *.swp
 *.swo
 *~
@@ -133,3 +134,15 @@ test/
 # Compiled files
 *.pyc
 *.pyo
+
+# Private documentation & research assets (local only)
+docs/
+/docs/
+**/docs/
+research_paper_assets/
+/research_paper_assets/
+**/research_paper_assets/
+Manuscript.pdf
+CONCEPT_NOTE.md
+DEPLOYMENT.md
+exp_env.txt

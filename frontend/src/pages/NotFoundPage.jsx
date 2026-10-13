@@ -83,13 +83,7 @@ export default function NotFoundPage() {
             <Link to="/docs" className="block p-3 rounded-lg border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-colors">
               <div className="flex items-center gap-3">
                 <Search className="h-4 w-4 text-slate-400" />
-                <span className="text-sm text-slate-700">Documentation</span>
-              </div>
-            </Link>
-            <Link to="/playground" className="block p-3 rounded-lg border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-colors">
-              <div className="flex items-center gap-3">
-                <AlertTriangle className="h-4 w-4 text-slate-400" />
-                <span className="text-sm text-slate-700">Playground (Under Development)</span>
+                <span className="text-sm text-slate-700">API Documentation</span>
               </div>
             </Link>
           </div>

@@ -1,6 +1,9 @@
 import React, { useState, useRef, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import { Link } from "react-router-dom"
 import { Button } from "./ui/button"
+import SendMatrixIcon from "./ui/SendMatrixIcon"
+import Tooltip from "./ui/tooltip"
 import { cn } from "../lib/utils"
 import {
   ShieldCheck,
@@ -14,7 +17,8 @@ import {
   Bot,
   Clock,
   Loader2,
-  ChevronDown
+  ChevronDown,
+  Key,
 } from "lucide-react"
 
 // Keep all the existing functions and constants from the original file
@@ -176,7 +180,7 @@ function TimeElapsed({ startTime }) {
   return <span className="tabular-nums text-muted-foreground">{seconds}s</span>
 }
 
-export default function InferencePanel({ data, loading, mode, onClear }) {
+export default function InferencePanel({ data, loading, mode, onClear, cooldownSeconds = 0, onOpenLlmSettings }) {
   const [copied, setCopied] = useState(false)
   const [isJsonOpen, setIsJsonOpen] = useState(false)
   const [processingTime, setProcessingTime] = useState(null)
@@ -371,12 +375,13 @@ export default function InferencePanel({ data, loading, mode, onClear }) {
             <Sparkles className="h-4 w-4 text-orange-500" />
             Detection Results
           </h2>
-          <p className="mt-3 text-sm text-muted-foreground">
-            Paste a suspicious message, URL, or upload an image above, then hit{" "}
-            <span className="mx-1 text-xs px-2 py-1 bg-gray-100 rounded-md border">
-              Send
-            </span>{" "}
-            to see the detection results here.
+          <p className="mt-3 text-sm text-muted-foreground leading-relaxed flex items-center flex-wrap gap-1">
+            <span>Paste a suspicious message, URL, or upload an image above, then hit</span>
+            <span className="inline-flex items-center gap-1 rounded-[5px] bg-[#E83C00] px-1.5 py-0.5 text-white text-xs font-semibold shadow-2xs mx-1">
+              <SendMatrixIcon className="w-3 h-3 text-white" />
+              <span>Send</span>
+            </span>
+            <span>to see the detection results here.</span>
           </p>
           <div className="mt-4 space-y-2">
             {[
@@ -442,6 +447,93 @@ export default function InferencePanel({ data, loading, mode, onClear }) {
         </div>
       </motion.div>
     )
+  }
+
+  // Dynamic Provider Rate Limit Cooldown State
+  if (data?.isRateLimit || data?.status === 429 || (isError && typeof data?.error === "string" && data.error.toLowerCase().includes("rate limit"))) {
+    const totalDuration = data?.cooldownSeconds || 20;
+    const progressPercent = Math.max(5, Math.min(100, (cooldownSeconds / totalDuration) * 100));
+
+    return (
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-6">
+        <div className="rounded-2xl border border-amber-300/80 bg-gradient-to-br from-amber-50/90 to-orange-50/50 p-5 sm:p-6 shadow-sm">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-600 shrink-0">
+                <Clock className="h-5 w-5 animate-pulse" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="text-sm font-bold text-slate-900">
+                    Community Free-Tier Cooldown
+                  </h2>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-500 text-white shadow-2xs">
+                    {cooldownSeconds > 0 ? `${cooldownSeconds}s remaining` : "Cooldown active"}
+                  </span>
+                </div>
+                <p className="mt-0.5 text-xs text-slate-600 leading-relaxed">
+                  {data.detail || "Provider rate limit reached. The system is cooling down smoothly according to provider response headers."}
+                </p>
+              </div>
+            </div>
+            {onClear && (
+              <Button variant="ghost" size="sm" onClick={onClear} className="h-7 text-xs text-slate-400 hover:text-slate-700">
+                Dismiss
+              </Button>
+            )}
+          </div>
+
+          {/* Animated Countdown Progress Bar */}
+          <div className="mt-4">
+            <div className="h-2 w-full rounded-full bg-amber-200/60 overflow-hidden">
+              <motion.div
+                className="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full"
+                style={{ width: `${progressPercent}%` }}
+                transition={{ duration: 0.9, ease: "linear" }}
+              />
+            </div>
+            <div className="mt-1.5 flex justify-between text-[11px] text-slate-500 font-mono">
+              <span>Dynamic provider backoff</span>
+              <span className="font-semibold text-amber-800">{cooldownSeconds}s</span>
+            </div>
+          </div>
+
+          {/* Zero-Charge BYOK Solution Callout */}
+          <div className="mt-5 rounded-xl border border-amber-200/80 bg-white/90 p-4 shadow-2xs">
+            <div className="flex items-start gap-2.5">
+              <Sparkles className="h-4 w-4 text-orange-500 shrink-0 mt-0.5" />
+              <div className="text-xs text-slate-700 leading-relaxed">
+                <p className="font-semibold text-slate-900 mb-0.5">
+                  Want unlimited queries without community wait times?
+                </p>
+                <p>
+                  Bring your own free API key (Groq, Google Gemini free tier with 15 RPM / 1M TPM, OpenAI, or OpenRouter).
+                  PH5 is <strong>100% free</strong> and non-custodial — we never store or charge for your API keys.
+                </p>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  {onOpenLlmSettings && (
+                    <Button
+                      size="sm"
+                      onClick={onOpenLlmSettings}
+                      className="bg-[#E83C00] hover:bg-[#d03600] text-white text-xs font-semibold h-7 px-3 shadow-2xs cursor-pointer"
+                    >
+                      <Key className="h-3 w-3 mr-1" />
+                      Configure Your Free Key
+                    </Button>
+                  )}
+                  <Link
+                    to="/docs"
+                    className="inline-flex items-center gap-1 text-xs font-medium text-slate-700 hover:text-slate-900 border border-slate-200 bg-white px-2.5 py-1 rounded-md hover:bg-slate-50 transition-colors h-7 shadow-2xs"
+                  >
+                    <span>View API Docs</span>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+    );
   }
 
   // Error state
@@ -519,7 +611,7 @@ export default function InferencePanel({ data, loading, mode, onClear }) {
                 <Button 
                   variant="destructive" 
                   size="sm" 
-                  className="h-8 px-3 text-xs font-medium bg-red-500 hover:bg-red-600 text-white border-0 shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-1.5"
+                  className="h-8 px-3 text-xs font-medium bg-red-500 hover:bg-red-600 text-white border-0 shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-1.5 cursor-pointer"
                   onClick={handleClearResults}
                 >
                   <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -527,19 +619,21 @@ export default function InferencePanel({ data, loading, mode, onClear }) {
                   </svg>
                   Clear Results
                 </Button>
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleCopy}>
-                  <AnimatePresence mode="wait">
-                    {copied ? (
-                      <motion.div key="check" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}>
-                        <Check className="h-3.5 w-3.5 text-emerald-500" />
-                      </motion.div>
-                    ) : (
-                      <motion.div key="copy" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}>
-                        <Copy className="h-3.5 w-3.5" />
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </Button>
+                <Tooltip content="Copy response JSON" position="top">
+                  <Button variant="ghost" size="icon" className="h-7 w-7 cursor-pointer" onClick={handleCopy}>
+                    <AnimatePresence mode="wait">
+                      {copied ? (
+                        <motion.div key="check" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}>
+                          <Check className="h-3.5 w-3.5 text-emerald-500" />
+                        </motion.div>
+                      ) : (
+                        <motion.div key="copy" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}>
+                          <Copy className="h-3.5 w-3.5" />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </Button>
+                </Tooltip>
               </div>
             </div>
           </div>
@@ -613,9 +707,11 @@ export default function InferencePanel({ data, loading, mode, onClear }) {
                     <FileText className="h-4 w-4 text-orange-500" />
                     Extracted Text (OCR)
                   </h3>
-                  <Button variant="ghost" size="sm" className="h-7 w-7" onClick={handleCopyOCR}>
-                    <Copy className="h-3.5 w-3.5" />
-                  </Button>
+                  <Tooltip content="Copy extracted OCR text" position="left">
+                    <Button variant="ghost" size="sm" className="h-7 w-7 cursor-pointer" onClick={handleCopyOCR}>
+                      <Copy className="h-3.5 w-3.5" />
+                    </Button>
+                  </Tooltip>
                 </div>
                 <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap max-h-40 overflow-y-auto">
                   {data.ocr}
@@ -662,9 +758,11 @@ export default function InferencePanel({ data, loading, mode, onClear }) {
                   animate={{ opacity: 1 }}
                   className="mt-2 rounded-xl border bg-muted/10 p-4 relative"
                 >
-                  <Button variant="ghost" size="icon" className="absolute top-3 right-3 h-7 w-7" onClick={handleCopy}>
-                    {copied ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
-                  </Button>
+                  <Tooltip content="Copy raw response JSON" position="left">
+                    <Button variant="ghost" size="icon" className="absolute top-3 right-3 h-7 w-7 cursor-pointer" onClick={handleCopy}>
+                      {copied ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
+                    </Button>
+                  </Tooltip>
                   <pre className="max-h-56 overflow-auto text-xs leading-relaxed font-mono pr-10 text-muted-foreground">
                     {JSON.stringify(data, null, 2)}
                   </pre>
