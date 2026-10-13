@@ -73,17 +73,18 @@ class ModelRegistry:
         else:
             raise ModelUnavailableError(f"{name} model directory not found: {path}")
 
+        token = (self.settings.hf_token or os.environ.get("HF_TOKEN") or "").strip() or None
         try:
             gc.collect()
             tokenizer = AutoTokenizer.from_pretrained(
                 load_source,
                 local_files_only=local_only,
-                token=self.settings.hf_token or None,
+                token=token,
             )
             model = AutoModelForSequenceClassification.from_pretrained(
                 load_source,
                 local_files_only=local_only,
-                token=self.settings.hf_token or None,
+                token=token,
                 low_cpu_mem_usage=True,
             )
         except Exception as exc:
@@ -104,6 +105,7 @@ class ModelRegistry:
     def _load_resnet(self) -> nn.Module:
         self._ensure_artifacts()
         weights_path = self.image_path
+        token = (self.settings.hf_token or os.environ.get("HF_TOKEN") or "").strip() or None
         if not (hasattr(weights_path, "is_file") and weights_path.is_file()):
             if self.settings.hf_image_repo:
                 try:
@@ -112,7 +114,7 @@ class ModelRegistry:
                     weights_path = hf_hub_download(
                         repo_id=self.settings.hf_image_repo,
                         filename="best_model.pth",
-                        token=self.settings.hf_token or None
+                        token=token
                     )
                 except Exception as exc:
                     raise ModelUnavailableError(f"Failed downloading image model from HF Hub: {exc}") from exc

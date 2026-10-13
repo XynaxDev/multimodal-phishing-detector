@@ -4,7 +4,7 @@ FROM python:3.12-slim
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
-    HF_HOME=/tmp/hf \
+    HF_HOME=/app/hf_cache \
     OMP_NUM_THREADS=1 \
     MKL_NUM_THREADS=1
 
@@ -24,7 +24,7 @@ RUN pip install -r requirements.txt
 # so the models are downloaded from the Hugging Face Hub on first start).
 COPY . .
 
-RUN useradd -m appuser && chown -R appuser /app
+RUN mkdir -p /app/hf_cache && useradd -m appuser && chown -R appuser /app
 USER appuser
 
 ENV ENVIRONMENT=production PRELOAD_MODELS=false PORT=8000
