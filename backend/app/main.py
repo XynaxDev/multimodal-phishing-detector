@@ -53,12 +53,10 @@ app = FastAPI(
 
 from app.core.rate_limit import SecurityHeadersMiddleware, SlidingWindowRateLimiter
 
-origins = settings.cors_origin_list
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
-    allow_origin_regex=r"https://.*\.vercel\.app",
-    allow_credentials="*" not in origins,  # credentials are not allowed with wildcard origins
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["X-Process-Time", "Retry-After"],
