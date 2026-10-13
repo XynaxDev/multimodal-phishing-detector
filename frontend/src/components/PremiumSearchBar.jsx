@@ -86,6 +86,12 @@ export default function PremiumSearchBar({
     setBaseFile(value);
   };
 
+  // When mode changes, immediately sync parent baseQuery and baseFile to the current mode's isolated state
+  useEffect(() => {
+    setBaseQuery(modeQueries[mode] || "");
+    setBaseFile(modeFiles[mode] || null);
+  }, [mode]);
+
   // Sync internal state with props when they change (for clear results)
   useEffect(() => {
     if (!baseQuery) {
@@ -133,7 +139,7 @@ export default function PremiumSearchBar({
       if (mode === "urls" || (!e.shiftKey && !isMobile)) {
         e.preventDefault();
         if (!loading && (query.trim() || file)) {
-          run();
+          run(query, file);
         }
       }
     }
@@ -383,7 +389,7 @@ export default function PremiumSearchBar({
                   <button
                     type="button"
                     className="rounded-[5px] sm:rounded-[6px] bg-[#E83C00] hover:bg-[#cf3500] active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center shrink-0 overflow-hidden w-8 h-8 sm:w-9 sm:h-9 transition-all shadow-2xs cursor-pointer"
-                    onClick={run}
+                    onClick={() => run(query, file)}
                     disabled={loading || (!query.trim() && !file)}
                     aria-label="Send"
                   >
@@ -477,7 +483,7 @@ export default function PremiumSearchBar({
                     <button
                       type="button"
                       className="rounded-[5px] sm:rounded-[6px] bg-[#E83C00] hover:bg-[#cf3500] active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center shrink-0 overflow-hidden w-8 h-8 sm:w-9 sm:h-9 transition-all shadow-2xs cursor-pointer"
-                      onClick={run}
+                      onClick={() => run(query, file)}
                       disabled={loading}
                       aria-label="Send"
                     >

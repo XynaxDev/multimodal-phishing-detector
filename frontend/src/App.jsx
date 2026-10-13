@@ -68,29 +68,31 @@ function HomePage() {
     fetch("/api/v1/health").catch(() => {});
   }, []);
 
-  async function run() {
+  async function run(overrideQuery, overrideFile) {
     if (cooldownSeconds > 0) return;
     const currentMode = mode;
+    const activeQ = typeof overrideQuery === "string" ? overrideQuery : query;
+    const activeF = overrideFile !== undefined ? overrideFile : file;
     setIsLoading(true);
     setResultsByMode((prev) => ({ ...prev, [currentMode]: null }));
 
     try {
       let response;
       if (currentMode === "urls") {
-        response = await urlCheck(query);
+        response = await urlCheck(activeQ);
       } else if (currentMode === "images") {
-        if (!file) {
+        if (!activeF) {
           alert("Upload image first!");
           setIsLoading(false);
           return;
         }
-        response = await imageCheckFile(file);
+        response = await imageCheckFile(activeF);
       } else if (currentMode === "chat") {
-        response = await chatMultipart(query, file);
+        response = await chatMultipart(activeQ, activeF || null);
       } else if (currentMode === "script") {
-        response = await textCheck(query);
+        response = await textCheck(activeQ);
       } else {
-        response = await textCheck(query);
+        response = await textCheck(activeQ);
       }
 
       console.log("API Response:", response);

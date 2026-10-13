@@ -136,7 +136,10 @@ class AnalysisService:
             score = probs.get("phishing", p_phish)
         else:
             # No OCR text detected (e.g. personal photo, camera capture, or non-text image)
-            verdict = "phishing" if p_phish >= 0.5 else "benign"
+            # Legitimate phishing screenshots almost always contain text (brand names, login prompts, forms).
+            # When OCR detects ZERO text, scores near the 0.5 boundary are Out-of-Distribution visual noise.
+            # Require higher visual confidence (>= 0.65) to flag phishing on text-less images; otherwise mark benign.
+            verdict = "phishing" if p_phish >= 0.65 else "benign"
             score = p_phish
             summary = {
                 "mode": "image",
@@ -144,6 +147,7 @@ class AnalysisService:
                 "phishing_score": score,
                 "probs": probs,
                 "ocr_status": "No text, brand logos, or login forms detected in image.",
+                "note": "Non-text image / photo. No phishing credential forms or brand logos were detected.",
             }
             expl, src, provider, model, cooldown = self.llm.explain(
                 summary, ocr_text=None, config=config
@@ -222,6 +226,9 @@ class AnalysisService:
     # ------------------------------------------------------------------ chat
     def heuristic_intent(self, query: str, has_image: bool) -> str:
         q = (query or "").strip()
+        ql = q.lower()
+        if ql in _GREETINGS or ql in ("hi", "hii", "hiii", "hello", "hey", "hey there", "good morning", "good evening"):
+            return "chat"
         if has_image:
             return "image_check"
         if not q:

@@ -701,64 +701,66 @@ export default function InferencePanel({ data, loading, mode, onClear, cooldownS
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-6">
         <div className="rounded-2xl border bg-card overflow-hidden">
           {/* Header */}
-          <div className="flex flex-wrap items-center justify-between gap-2.5 px-3.5 py-3 sm:px-5 sm:py-4 border-b">
-            <h2 className="text-sm font-semibold flex items-center gap-2">
+          <div className="flex items-center justify-between gap-2 px-3 sm:px-5 py-2.5 sm:py-3.5 border-b bg-card">
+            <div className="flex items-center gap-1.5 min-w-0">
               {isChatMode ? (
                 <MessageCircle className="h-4 w-4 text-orange-500 shrink-0" />
               ) : (
                 <ShieldCheck className="h-4 w-4 text-orange-500 shrink-0" />
               )}
-              <span>{isChatMode ? "Analysis Result" : "Detection Result"}</span>
+              <h2 className="text-xs sm:text-sm font-semibold truncate text-slate-900">
+                {isChatMode ? "Analysis Result" : "Detection Result"}
+              </h2>
               {data.intent && (
-                <span className="ml-1 text-[11px] font-normal px-2 py-0.5 border rounded-md bg-gray-50 text-slate-600">
+                <span className="hidden sm:inline-block text-[10px] font-normal px-1.5 py-0.5 border rounded bg-gray-50 text-slate-600 truncate">
                   {data.intent.replace("_", " ")}
                 </span>
               )}
-            </h2>
-            <div className="flex items-center gap-2 sm:gap-3">
+            </div>
+
+            <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
               {processingTime && (
                 <motion.span
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="text-xs text-muted-foreground flex items-center gap-1 font-mono"
+                  className="text-[10px] sm:text-xs text-muted-foreground hidden sm:flex items-center gap-1 font-mono"
                 >
                   <Clock className="h-3 w-3" />
-                  {(processingTime / 1000).toFixed(2)}s
+                  {(processingTime / 1000).toFixed(1)}s
                 </motion.span>
               )}
-              <div className="flex items-center gap-1.5 sm:gap-2">
-                <Button 
-                  variant="destructive" 
-                  size="sm" 
-                  className="h-7.5 px-2.5 sm:px-3 text-xs font-medium bg-red-500 hover:bg-red-600 text-white border-0 shadow-2xs hover:shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
-                  onClick={handleClearResults}
-                >
-                  <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                  <span>Clear Results</span>
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7.5 w-7.5 border border-gray-200/80 bg-white/60 hover:bg-white cursor-pointer rounded-lg shrink-0"
-                  onClick={handleCopy}
-                  aria-label="Copy response JSON"
-                  title="Copy response JSON"
-                >
-                  <AnimatePresence mode="wait">
-                    {copied ? (
-                      <motion.div key="check" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}>
-                        <Check className="h-3.5 w-3.5 text-emerald-500" />
-                      </motion.div>
-                    ) : (
-                      <motion.div key="copy" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}>
-                        <Copy className="h-3.5 w-3.5 text-slate-600" />
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </Button>
-              </div>
+              <Button 
+                variant="destructive" 
+                size="sm" 
+                className="h-7 sm:h-7.5 px-2 sm:px-2.5 text-[11px] sm:text-xs font-medium bg-red-500 hover:bg-red-600 text-white border-0 shadow-2xs hover:shadow-xs transition-all flex items-center gap-1 cursor-pointer rounded-lg"
+                onClick={handleClearResults}
+              >
+                <svg className="h-3 w-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                <span>Clear</span>
+                <span className="hidden sm:inline">Results</span>
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 sm:h-7.5 sm:w-7.5 border border-gray-200/80 bg-white/70 hover:bg-white cursor-pointer rounded-lg shrink-0"
+                onClick={handleCopy}
+                aria-label="Copy response JSON"
+                title="Copy response JSON"
+              >
+                <AnimatePresence mode="wait">
+                  {copied ? (
+                    <motion.div key="check" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}>
+                      <Check className="h-3.5 w-3.5 text-emerald-500" />
+                    </motion.div>
+                  ) : (
+                    <motion.div key="copy" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}>
+                      <Copy className="h-3.5 w-3.5 text-slate-600" />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </Button>
             </div>
           </div>
 
