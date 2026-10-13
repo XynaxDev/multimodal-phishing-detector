@@ -1,6 +1,7 @@
 """Lazy, thread-safe loading of the three classifiers (BERT, DistilBERT, ResNet-50)."""
 from __future__ import annotations
 
+import gc
 import logging
 import threading
 from typing import Dict, Optional, Tuple
@@ -16,6 +17,11 @@ from app.core.errors import ModelUnavailableError
 logger = logging.getLogger("ph5.models")
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+if DEVICE.type == "cpu":
+    try:
+        torch.set_num_threads(1)
+    except Exception:
+        pass
 
 
 class ModelRegistry:
@@ -68,8 +74,18 @@ class ModelRegistry:
             raise ModelUnavailableError(f"{name} model directory not found: {path}")
 
         try:
-            tokenizer = AutoTokenizer.from_pretrained(load_source, local_files_only=local_only, token=self.settings.hf_token or None)
-            model = AutoModelForSequenceClassification.from_pretrained(load_source, local_files_only=local_only, token=self.settings.hf_token or None)
+            gc.collect()
+            tokenizer = AutoTokenizer.from_pretrained(
+                load_source,
+                local_files_only=local_only,
+                token=self.settings.hf_token or None,
+            )
+            model = AutoModelForSequenceClassification.from_pretrained(
+                load_source,
+                local_files_only=local_only,
+                token=self.settings.hf_token or None,
+                low_cpu_mem_usage=True,
+            )
         except Exception as exc:
             logger.exception("Failed loading %s model from %s", name, load_source)
             raise ModelUnavailableError(f"Failed loading {name} model from {load_source}: {exc}") from exc
@@ -78,9 +94,11 @@ class ModelRegistry:
             try:
                 model = torch.quantization.quantize_dynamic(model, {nn.Linear}, dtype=torch.qint8)
                 logger.info("%s model dynamically quantized to INT8 for low-memory host", name)
+                gc.collect()
             except Exception as exc:
                 logger.warning("Quantization skipped for %s: %s", name, exc)
         model.to(DEVICE).eval()
+        gc.collect()
         return tokenizer, model
 
     def _load_resnet(self) -> nn.Module:
@@ -112,6 +130,8 @@ class ModelRegistry:
             state = state["state_dict"]
         state = {k.removeprefix("module."): v for k, v in state.items()}
         model.load_state_dict(state)
+        del state
+        gc.collect()
         model.to(DEVICE).eval()
         return model
 

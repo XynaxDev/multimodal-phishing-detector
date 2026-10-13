@@ -5,7 +5,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
     HF_HOME=/tmp/hf \
-    OMP_NUM_THREADS=2
+    OMP_NUM_THREADS=1 \
+    MKL_NUM_THREADS=1
 
 # Tesseract for optional OCR on screenshots
 RUN apt-get update \
