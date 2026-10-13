@@ -49,6 +49,8 @@ class Settings(BaseSettings):
     hf_token: str = ""
     # Load all models in the background right after startup (recommended in prod).
     preload_models: bool = False
+    # Dynamic INT8 CPU quantization for memory-constrained hosts (e.g. 512MB RAM on Render)
+    quantize_models: bool = False
 
     # ---- Inference ---------------------------------------------------------
     max_upload_mb: int = 10

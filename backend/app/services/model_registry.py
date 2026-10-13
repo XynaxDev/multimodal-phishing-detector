@@ -60,6 +60,12 @@ class ModelRegistry:
         logger.info("Loading %s model from %s", name, path)
         tokenizer = AutoTokenizer.from_pretrained(str(path), local_files_only=True)
         model = AutoModelForSequenceClassification.from_pretrained(str(path), local_files_only=True)
+        if self.settings.quantize_models and DEVICE.type == "cpu":
+            try:
+                model = torch.quantization.quantize_dynamic(model, {nn.Linear}, dtype=torch.qint8)
+                logger.info("%s model dynamically quantized to INT8 for low-memory host", name)
+            except Exception as exc:
+                logger.warning("Quantization skipped for %s: %s", name, exc)
         model.to(DEVICE).eval()
         return tokenizer, model
 
