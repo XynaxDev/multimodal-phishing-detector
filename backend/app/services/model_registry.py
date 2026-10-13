@@ -55,11 +55,25 @@ class ModelRegistry:
 
     def _load_hf_classifier(self, name: str, path) -> Tuple:
         self._ensure_artifacts()
-        if not path.is_dir():
+        hub_repo = self.settings.hf_url_repo if name == "url" else self.settings.hf_text_repo
+        if path.is_dir():
+            load_source = str(path)
+            local_only = True
+            logger.info("Loading %s model from local path: %s", name, path)
+        elif hub_repo:
+            load_source = hub_repo
+            local_only = False
+            logger.info("Loading %s model from Hugging Face Hub: %s", name, hub_repo)
+        else:
             raise ModelUnavailableError(f"{name} model directory not found: {path}")
-        logger.info("Loading %s model from %s", name, path)
-        tokenizer = AutoTokenizer.from_pretrained(str(path), local_files_only=True)
-        model = AutoModelForSequenceClassification.from_pretrained(str(path), local_files_only=True)
+
+        try:
+            tokenizer = AutoTokenizer.from_pretrained(load_source, local_files_only=local_only, token=self.settings.hf_token or None)
+            model = AutoModelForSequenceClassification.from_pretrained(load_source, local_files_only=local_only, token=self.settings.hf_token or None)
+        except Exception as exc:
+            logger.exception("Failed loading %s model from %s", name, load_source)
+            raise ModelUnavailableError(f"Failed loading {name} model from {load_source}: {exc}") from exc
+
         if self.settings.quantize_models and DEVICE.type == "cpu":
             try:
                 model = torch.quantization.quantize_dynamic(model, {nn.Linear}, dtype=torch.qint8)
@@ -71,16 +85,29 @@ class ModelRegistry:
 
     def _load_resnet(self) -> nn.Module:
         self._ensure_artifacts()
-        if not self.image_path.is_file():
-            raise ModelUnavailableError(f"Image model file not found: {self.image_path}")
-        logger.info("Loading image model from %s", self.image_path)
+        weights_path = self.image_path
+        if not (hasattr(weights_path, "is_file") and weights_path.is_file()):
+            if self.settings.hf_image_repo:
+                try:
+                    from huggingface_hub import hf_hub_download
+                    logger.info("Downloading ResNet-50 weights from HF Hub: %s", self.settings.hf_image_repo)
+                    weights_path = hf_hub_download(
+                        repo_id=self.settings.hf_image_repo,
+                        filename="best_model.pth",
+                        token=self.settings.hf_token or None
+                    )
+                except Exception as exc:
+                    raise ModelUnavailableError(f"Failed downloading image model from HF Hub: {exc}") from exc
+            else:
+                raise ModelUnavailableError(f"Image model file not found: {self.image_path}")
+
+        logger.info("Loading image model from %s", weights_path)
         model = tv_models.resnet50(weights=None)
         model.fc = nn.Sequential(nn.Dropout(0.3), nn.Linear(model.fc.in_features, 2))
         try:
-            state = torch.load(str(self.image_path), map_location=DEVICE, weights_only=True)
+            state = torch.load(str(weights_path), map_location=DEVICE, weights_only=True)
         except Exception:
-            # Checkpoint contains non-tensor objects; it's our own trusted artifact.
-            state = torch.load(str(self.image_path), map_location=DEVICE, weights_only=False)
+            state = torch.load(str(weights_path), map_location=DEVICE, weights_only=False)
         if isinstance(state, dict) and "state_dict" in state:
             state = state["state_dict"]
         state = {k.removeprefix("module."): v for k, v in state.items()}

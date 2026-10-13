@@ -42,9 +42,10 @@ class Settings(BaseSettings):
     text_model_dir: str = "models/text/bert_finetuned"
     url_model_dir: str = "models/url/distilbert_url"
     image_model_path: str = "models/image/best_model.pth"
-    # Optional: Hugging Face Hub repo holding the same layout
-    # (text/bert_finetuned, url/distilbert_url, image/best_model.pth).
-    # When set and the local files are missing, they are downloaded on startup.
+    # Hugging Face Hub repositories (fallback when local model directories are absent)
+    hf_url_repo: str = "xynaxdev/ph5-url-distilbert"
+    hf_text_repo: str = "xynaxdev/ph5-text-bert"
+    hf_image_repo: str = "xynaxdev/ph5-image-resnet50"
     hf_model_repo: str = ""
     hf_token: str = ""
     # Load all models in the background right after startup (recommended in prod).
