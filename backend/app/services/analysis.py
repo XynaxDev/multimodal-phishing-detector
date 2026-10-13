@@ -1,6 +1,7 @@
 """High-level analysis use-cases consumed by the API routes."""
 from __future__ import annotations
 
+import gc
 import logging
 import time
 from io import BytesIO
@@ -52,6 +53,10 @@ class AnalysisService:
         try:
             img = Image.open(BytesIO(data))
             img.load()
+            # Safety safeguard for low-memory cloud hosts (Render 512MB RAM):
+            # Downsample images larger than 1280px to prevent OOM in PyTorch & OCR
+            if max(img.size) > 1280:
+                img.thumbnail((1280, 1280), Image.Resampling.LANCZOS)
             return img
         except (UnidentifiedImageError, OSError) as exc:
             raise UnsupportedMediaError("File is not a valid image") from exc
@@ -106,7 +111,9 @@ class AnalysisService:
             raw_probs = self.engine.image(img)
         except ModelUnavailableError:
             raw_probs = {"benign": 0.5, "phishing": 0.5}
-        ocr_text = self.ocr.extract(data)
+        ocr_text = self.ocr.extract(img)
+        del img
+        gc.collect()
         verdict, probs, expl, src, provider, model, cooldown = self.llm.evaluate_and_explain(
             mode="image", content="Screenshot landing page", raw_probs=raw_probs, ocr_text=ocr_text, config=config
         )
@@ -149,7 +156,9 @@ class AnalysisService:
                 img_probs = self.engine.image(img)
             except ModelUnavailableError:
                 img_probs = {"benign": 0.5, "phishing": 0.5}
-            ocr_text = self.ocr.extract(image_bytes)
+            ocr_text = self.ocr.extract(img)
+            del img
+            gc.collect()
             if ocr_text:
                 try:
                     ocr_prob = self.engine.text(ocr_text[: self.settings.max_text_chars])["phishing"]

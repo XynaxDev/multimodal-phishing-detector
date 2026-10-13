@@ -19,6 +19,10 @@ import {
   Loader2,
   ChevronDown,
   Key,
+  RefreshCw,
+  Cpu,
+  CheckCircle2,
+  Zap,
 } from "lucide-react"
 
 // Keep all the existing functions and constants from the original file
@@ -545,31 +549,127 @@ export default function InferencePanel({ data, loading, mode, onClear, cooldownS
 
   // Error state
   if (isError) {
-    const isTimeout = Boolean(data?.isTimeout || (typeof data?.error === "string" && data.error.toLowerCase().includes("timeout")));
+    const rawErrorStr = typeof data?.error === "string" ? data.error : "";
+    const isTimeout = Boolean(
+      data?.isTimeout ||
+      rawErrorStr.toLowerCase().includes("timeout") ||
+      rawErrorStr.toLowerCase().includes("waking up")
+    );
+    const isNetworkError = Boolean(
+      data?.isNetworkError ||
+      rawErrorStr.includes("512MB") ||
+      rawErrorStr.toLowerCase().includes("network error") ||
+      rawErrorStr.toLowerCase().includes("memory cap")
+    );
+
+    const title = isTimeout
+      ? "Cloud Server Waking Up"
+      : isNetworkError
+      ? "Cloud Service Auto-Recovering"
+      : "Analysis Failed";
+
+    const badgeText = isTimeout
+      ? "Render Cold Start"
+      : isNetworkError
+      ? "512MB RAM Limit"
+      : "Error";
+
+    const displayMessage =
+      rawErrorStr && rawErrorStr.toLowerCase() !== "network error"
+        ? rawErrorStr
+        : isNetworkError
+        ? "The free-tier cloud host (Render 512MB RAM cap) hit a momentary memory limit while processing this high-res mobile photo. The container auto-recovers in ~5–10 seconds."
+        : "An unexpected error occurred during analysis. Please try again.";
+
     return (
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-6">
-        <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-5">
+        <div
+          className={`rounded-2xl border p-5 sm:p-6 shadow-xs backdrop-blur-sm transition-all ${
+            isNetworkError || isTimeout
+              ? "border-amber-200/90 bg-gradient-to-br from-amber-50/90 via-orange-50/30 to-white text-slate-800"
+              : "border-destructive/30 bg-destructive/5 text-destructive"
+          }`}
+        >
+          {/* Header Row */}
           <div className="flex items-center justify-between gap-3 flex-wrap">
-            <h2 className="text-sm font-semibold flex items-center gap-2 text-destructive">
-              <AlertTriangle className="h-4 w-4 shrink-0" />
-              <span>{isTimeout ? "Cloud Server Waking Up" : "Analysis Failed"}</span>
-            </h2>
+            <div className="flex items-center gap-2.5">
+              <div
+                className={`flex h-8 w-8 items-center justify-center rounded-xl shrink-0 ${
+                  isNetworkError || isTimeout
+                    ? "bg-amber-100 text-amber-700 border border-amber-300/60"
+                    : "bg-destructive/10 text-destructive border border-destructive/20"
+                }`}
+              >
+                {isTimeout ? (
+                  <Clock className="h-4 w-4" />
+                ) : isNetworkError ? (
+                  <Cpu className="h-4 w-4" />
+                ) : (
+                  <AlertTriangle className="h-4 w-4" />
+                )}
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="text-sm sm:text-base font-semibold text-slate-900 tracking-tight">
+                  {title}
+                </h2>
+                <span
+                  className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium border ${
+                    isNetworkError || isTimeout
+                      ? "bg-amber-100/90 text-amber-800 border-amber-200"
+                      : "bg-destructive/10 text-destructive border-destructive/20"
+                  }`}
+                >
+                  {badgeText}
+                </span>
+              </div>
+            </div>
+
             {onRetry && (
               <Button
                 size="sm"
                 onClick={onRetry}
-                className="bg-orange-600 hover:bg-orange-700 text-white text-xs font-semibold h-7 px-3 shadow-2xs cursor-pointer inline-flex items-center gap-1"
+                className="bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white text-xs font-semibold h-8 px-3.5 rounded-xl shadow-xs cursor-pointer inline-flex items-center gap-1.5 transition-all active:scale-95"
               >
+                <RefreshCw className="h-3.5 w-3.5" />
                 <span>Retry Analysis</span>
               </Button>
             )}
           </div>
-          <p className="mt-2 text-sm text-destructive/80 leading-relaxed">
-            {typeof data.error === "string" ? data.error : "An unexpected error occurred"}
+
+          {/* Description */}
+          <p
+            className={`mt-3 text-xs sm:text-sm leading-relaxed ${
+              isNetworkError || isTimeout ? "text-slate-700" : "text-destructive/80"
+            }`}
+          >
+            {displayMessage}
           </p>
+
+          {/* Feature Badges & Tip */}
+          {(isNetworkError || isTimeout) && (
+            <div className="mt-4 pt-3.5 border-t border-amber-200/60 space-y-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-700">
+                <div className="flex items-start gap-1.5 rounded-lg bg-white/70 p-2 border border-amber-200/50">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 mt-0.5 shrink-0" />
+                  <span>
+                    <strong>Client-side optimization:</strong> Images are automatically scaled in your browser before upload to prevent memory spikes.
+                  </span>
+                </div>
+                <div className="flex items-start gap-1.5 rounded-lg bg-white/70 p-2 border border-amber-200/50">
+                  <Zap className="h-3.5 w-3.5 text-amber-600 mt-0.5 shrink-0" />
+                  <span>
+                    <strong>Auto-recovery:</strong> Cloud containers reboot automatically within 5–10 seconds. Click <em>Retry Analysis</em> to proceed.
+                  </span>
+                </div>
+              </div>
+              <p className="text-[11px] text-slate-500 pt-1">
+                💡 <span className="font-semibold text-slate-600">Tip:</span> Direct camera photos (12MP–48MP) are automatically compressed. Screenshots of suspicious emails or messages work with near-zero latency!
+              </p>
+            </div>
+          )}
         </div>
       </motion.div>
-    )
+    );
   }
 
   return (

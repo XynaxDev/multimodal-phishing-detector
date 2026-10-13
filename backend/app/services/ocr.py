@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import logging
 from io import BytesIO
-from typing import Optional
+from typing import Optional, Union
 
 import requests
 from PIL import Image
@@ -39,7 +39,7 @@ class OCRService:
             logger.debug("n8n OCR failed: %s", exc)
         return None
 
-    def _via_tesseract(self, image_bytes: bytes) -> Optional[str]:
+    def _via_tesseract(self, image_input: Union[bytes, Image.Image]) -> Optional[str]:
         if self._tesseract_ok is False:
             return None
         try:
@@ -47,7 +47,15 @@ class OCRService:
 
             if self.settings.tesseract_cmd.strip():
                 pytesseract.pytesseract.tesseract_cmd = self.settings.tesseract_cmd.strip()
-            img = Image.open(BytesIO(image_bytes)).convert("RGB")
+
+            if isinstance(image_input, Image.Image):
+                img = image_input.convert("RGB")
+            else:
+                img = Image.open(BytesIO(image_input)).convert("RGB")
+
+            if max(img.size) > 1024:
+                img.thumbnail((1024, 1024), Image.Resampling.LANCZOS)
+
             text = pytesseract.image_to_string(img)
             self._tesseract_ok = True
             return text
@@ -57,11 +65,25 @@ class OCRService:
             self._tesseract_ok = False
             return None
 
-    def extract(self, image_bytes: bytes) -> Optional[str]:
+    def extract(self, image_input: Union[bytes, Image.Image]) -> Optional[str]:
         if not self.enabled:
             return None
-        for fn in (self._via_n8n, self._via_tesseract):
-            text = fn(image_bytes)
+
+        # If n8n endpoint is active, it requires image bytes
+        if self.settings.n8n_ocr_endpoint.strip():
+            if isinstance(image_input, Image.Image):
+                buf = BytesIO()
+                image_input.save(buf, format="JPEG", quality=85)
+                raw_bytes = buf.getvalue()
+            else:
+                raw_bytes = image_input
+            text = self._via_n8n(raw_bytes)
             if text and text.strip():
                 return text.strip()
+
+        # Local tesseract OCR
+        text = self._via_tesseract(image_input)
+        if text and text.strip():
+            return text.strip()
         return None
+

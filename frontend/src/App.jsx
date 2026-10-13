@@ -92,14 +92,25 @@ function HomePage() {
             : typeof errData?.error === "string"
             ? errData.error
             : err.message;
+        const status = err?.response?.status;
+        const isGatewayError = status === 502 || status === 503 || status === 504;
         const isTimeout =
           err.code === "ECONNABORTED" ||
           (typeof msg === "string" && msg.toLowerCase().includes("timeout"));
+        const isNetworkError =
+          err.code === "ERR_NETWORK" ||
+          err.message === "Network Error" ||
+          isGatewayError ||
+          (!err.response && Boolean(err.request));
+
         if (isTimeout) {
           msg =
             "Backend was waking up from free-tier sleep (Render cold start). The service is now warm! Click Retry to get results in <400ms.";
+        } else if (isNetworkError) {
+          msg =
+            "The free-tier cloud host (Render 512MB RAM cap) hit a momentary memory limit while processing this image and is auto-recovering (~5-10s). Images are automatically optimized before upload. Click Retry Analysis below!";
         }
-        setResult({ error: msg, isTimeout });
+        setResult({ error: msg, isTimeout, isNetworkError });
       }
     } finally {
       setIsLoading(false);

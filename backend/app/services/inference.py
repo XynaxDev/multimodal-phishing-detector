@@ -1,6 +1,7 @@
 """Raw model inference. Each function returns a ``{class_name: probability}`` dict."""
 from __future__ import annotations
 
+import gc
 import re
 import urllib.parse
 from typing import Dict
@@ -95,4 +96,6 @@ class InferenceEngine:
         model = self.registry.image()
         x = self.img_transform(img.convert("RGB")).unsqueeze(0).to(DEVICE)
         probs = _softmax(model(x))
+        del x
+        gc.collect()
         return {"benign": float(probs[0]), "phishing": float(probs[1]) if len(probs) > 1 else 0.0}

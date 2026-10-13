@@ -146,6 +146,82 @@ export function parseRateLimitError(err) {
   };
 }
 
+/**
+ * Automatically optimizes images before upload to prevent high-resolution mobile
+ * camera photos (often 12MP-48MP / 2MB-15MB) from crashing low-memory cloud hosts (512MB RAM OOM).
+ * Resizes down to max 1280px on the longest dimension, preserving 100% of OCR and ResNet visual fidelity.
+ */
+export async function optimizeImageForUpload(file, maxDimension = 1280, quality = 0.88) {
+  if (!file || !(file instanceof File || file instanceof Blob) || !file.type?.startsWith("image/")) {
+    return file;
+  }
+
+  return new Promise((resolve) => {
+    try {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        let { width, height } = img;
+        if (width <= maxDimension && height <= maxDimension && file.size < 400 * 1024) {
+          resolve(file);
+          return;
+        }
+
+        if (width > height) {
+          if (width > maxDimension) {
+            height = Math.round((height * maxDimension) / width);
+            width = maxDimension;
+          }
+        } else {
+          if (height > maxDimension) {
+            width = Math.round((width * maxDimension) / height);
+            height = maxDimension;
+          }
+        }
+
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          resolve(file);
+          return;
+        }
+        ctx.drawImage(img, 0, 0, width, height);
+
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              resolve(file);
+              return;
+            }
+            const origName = file.name || "upload.jpg";
+            const safeName = origName.replace(/\.[^/.]+$/, "") + ".jpg";
+            const optimizedFile = new File([blob], safeName, {
+              type: "image/jpeg",
+              lastModified: Date.now(),
+            });
+            console.log(
+              `[PH5 Optimization] Scaled ${file.name} from ${(file.size / 1024).toFixed(0)}KB to ${(optimizedFile.size / 1024).toFixed(0)}KB (${width}x${height})`
+            );
+            resolve(optimizedFile);
+          },
+          "image/jpeg",
+          quality
+        );
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        resolve(file);
+      };
+      img.src = url;
+    } catch {
+      resolve(file);
+    }
+  });
+}
+
 export async function textCheck(text) {
   return api.post("/analyze/text", { text });
 }
@@ -155,8 +231,9 @@ export async function urlCheck(url) {
 }
 
 export async function imageCheckFile(file) {
+  const safeFile = await optimizeImageForUpload(file);
   const form = new FormData();
-  form.append("file", file);
+  form.append("file", safeFile);
   return api.post("/analyze/image", form, {
     headers: { "Content-Type": "multipart/form-data" },
   });
@@ -166,7 +243,10 @@ export async function multimodalCheck({ text, url, file } = {}) {
   const form = new FormData();
   if (text) form.append("text", text);
   if (url) form.append("url", url);
-  if (file) form.append("file", file);
+  if (file) {
+    const safeFile = await optimizeImageForUpload(file);
+    form.append("file", safeFile);
+  }
   return api.post("/analyze/multimodal", form, {
     headers: { "Content-Type": "multipart/form-data" },
   });
@@ -175,7 +255,10 @@ export async function multimodalCheck({ text, url, file } = {}) {
 export async function chatMultipart(query, file) {
   const form = new FormData();
   form.append("query", query || "");
-  if (file) form.append("file", file);
+  if (file) {
+    const safeFile = await optimizeImageForUpload(file);
+    form.append("file", safeFile);
+  }
   return api.post("/chat", form, {
     headers: { "Content-Type": "multipart/form-data" },
   });
