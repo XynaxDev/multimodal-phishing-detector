@@ -8,9 +8,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     OMP_NUM_THREADS=1 \
     MKL_NUM_THREADS=1
 
-# Tesseract for optional OCR on screenshots
+# Tesseract for optional OCR on screenshots and libgomp1 for onnxruntime OpenMP execution
 RUN apt-get update \
- && apt-get install -y --no-install-recommends tesseract-ocr \
+ && apt-get install -y --no-install-recommends tesseract-ocr libgomp1 \
  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
