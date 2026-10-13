@@ -5,6 +5,7 @@ import re
 import urllib.parse
 from typing import Dict
 
+import numpy as np
 import torch
 from PIL import Image
 from torchvision import transforms
@@ -19,6 +20,19 @@ def _softmax(logits: torch.Tensor) -> list:
     return torch.softmax(logits, dim=1)[0].cpu().tolist()
 
 
+def _predict_sequence_probs(model, tokenizer, text: str, max_length: int) -> list:
+    if hasattr(model, "run"):  # ONNX Runtime InferenceSession
+        inputs = tokenizer(text, truncation=True, padding="max_length", max_length=max_length, return_tensors="np")
+        feed = {k: v.astype(np.int64) for k, v in inputs.items() if k in ["input_ids", "attention_mask"]}
+        logits = model.run(["logits"], feed)[0]
+        exp = np.exp(logits - np.max(logits, axis=1, keepdims=True))
+        return (exp / np.sum(exp, axis=1, keepdims=True))[0].tolist()
+    else:  # PyTorch sequence classifier
+        enc = tokenizer(text, truncation=True, padding="max_length", max_length=max_length, return_tensors="pt")
+        enc = {k: v.to(DEVICE) for k, v in enc.items()}
+        return _softmax(model(**enc).logits)
+
+
 class InferenceEngine:
     def __init__(self, registry: ModelRegistry, img_size: int = 224):
         self.registry = registry
@@ -30,12 +44,9 @@ class InferenceEngine:
             ]
         )
 
-    @torch.inference_mode()
     def text(self, text: str) -> Dict[str, float]:
         tokenizer, model = self.registry.text()
-        enc = tokenizer(text, truncation=True, padding="max_length", max_length=256, return_tensors="pt")
-        enc = {k: v.to(DEVICE) for k, v in enc.items()}
-        probs = _softmax(model(**enc).logits)
+        probs = _predict_sequence_probs(model, tokenizer, text, max_length=256)
         raw = {"benign": float(probs[0]), "phishing": float(probs[1]) if len(probs) > 1 else 0.0}
 
         # Authentic informational 2FA transactional check (zero outbound links, safety advisory)
@@ -50,12 +61,9 @@ class InferenceEngine:
 
         return raw
 
-    @torch.inference_mode()
     def url(self, url: str) -> Dict[str, float]:
         tokenizer, model = self.registry.url()
-        enc = tokenizer(url, truncation=True, padding="max_length", max_length=64, return_tensors="pt")
-        enc = {k: v.to(DEVICE) for k, v in enc.items()}
-        probs = _softmax(model(**enc).logits)
+        probs = _predict_sequence_probs(model, tokenizer, url, max_length=64)
         full_probs = {
             "benign": float(probs[0]),
             "phishing": float(probs[1]) if len(probs) > 1 else 0.0,
@@ -67,9 +75,7 @@ class InferenceEngine:
             parsed = urllib.parse.urlsplit(url if "://" in url else "http://" + url)
             if parsed.netloc and parsed.path and parsed.path not in ("", "/"):
                 root_url = f"{parsed.scheme or 'https'}://{parsed.netloc}"
-                enc_root = tokenizer(root_url, truncation=True, padding="max_length", max_length=64, return_tensors="pt")
-                enc_root = {k: v.to(DEVICE) for k, v in enc_root.items()}
-                root_raw = _softmax(model(**enc_root).logits)
+                root_raw = _predict_sequence_probs(model, tokenizer, root_url, max_length=64)
                 root_benign = float(root_raw[0])
                 if root_benign > 0.90 and full_probs["malware"] < 0.50:
                     calibrated_phish = max(0.002, round(full_probs["phishing"] * (1.0 - root_benign) * 2, 4))

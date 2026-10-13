@@ -62,6 +62,43 @@ class ModelRegistry:
     def _load_hf_classifier(self, name: str, path) -> Tuple:
         self._ensure_artifacts()
         hub_repo = self.settings.hf_url_repo if name == "url" else self.settings.hf_text_repo
+        token = (self.settings.hf_token or os.environ.get("HF_TOKEN") or "").strip() or None
+
+        # 1. First priority on low-memory hosts: Ultra-compact INT8 ONNX runtime (~40MB RAM)
+        onnx_file = None
+        if path.is_dir() and (path / "model_quantized.onnx").is_file():
+            onnx_file = path / "model_quantized.onnx"
+        elif hub_repo:
+            try:
+                from huggingface_hub import hf_hub_download
+                cache_dir = os.environ.get("HF_HOME", "/app/hf_cache")
+                logger.info("Checking/downloading quantized ONNX model for %s from %s", name, hub_repo)
+                onnx_file = hf_hub_download(
+                    repo_id=hub_repo,
+                    filename="model_quantized.onnx",
+                    token=token,
+                    cache_dir=cache_dir,
+                )
+            except Exception as e:
+                logger.info("Quantized ONNX not downloaded for %s (%s); will attempt PyTorch fallback", name, e)
+
+        if onnx_file:
+            try:
+                import onnxruntime as ort
+                logger.info("Initializing high-efficiency ONNX Runtime session for %s from %s", name, onnx_file)
+                sess = ort.InferenceSession(str(onnx_file), providers=["CPUExecutionProvider"])
+                load_source = str(path) if path.is_dir() else hub_repo
+                tokenizer = AutoTokenizer.from_pretrained(
+                    load_source,
+                    local_files_only=path.is_dir(),
+                    token=token,
+                )
+                gc.collect()
+                return tokenizer, sess
+            except Exception as exc:
+                logger.warning("Failed initializing ONNX session for %s: %s; falling back to PyTorch", name, exc)
+
+        # 2. Fallback to standard PyTorch sequence classification
         if path.is_dir():
             load_source = str(path)
             local_only = True
@@ -73,7 +110,6 @@ class ModelRegistry:
         else:
             raise ModelUnavailableError(f"{name} model directory not found: {path}")
 
-        token = (self.settings.hf_token or os.environ.get("HF_TOKEN") or "").strip() or None
         try:
             gc.collect()
             tokenizer = AutoTokenizer.from_pretrained(
