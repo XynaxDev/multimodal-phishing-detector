@@ -9,18 +9,17 @@ export default function PremiumHero() {
         transition={{ duration: 0.3 }}
         className="text-4xl font-black tracking-tight text-black sm:text-5xl md:text-6xl"
       >
-        Turn messages into {" "}
-        <span className="text-orange-500">LLM‑ready verdicts</span>.
+        Detect Phishing Across{" "}
+        <span className="text-orange-500">Text, URLs, and Images</span>.
       </motion.h1>
 
       <motion.p
         initial={{ opacity: 0, y: 4 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.12, duration: 0.25 }}
-        className="mt-3 text-sm text-gray-600 md:text-base"
+        className="mt-3 text-sm text-gray-600 md:text-base max-w-2xl mx-auto"
       >
-        Paste suspicious text, links, or emails — or upload screenshots and
-        chats — and PH5 tells you how phishy they look.
+        Analyze suspicious messages, links, and screenshots using multimodal deep learning and AI reasoning to verify threats in real time.
       </motion.p>
     </section>
   );

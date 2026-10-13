@@ -6,9 +6,9 @@
 
   <br />
 
-  # PH5 — Multimodal Phishing Detector
+  <h1>PH5 Multimodal Phishing Detector</h1>
   <p>
-    <strong>Next-generation multimodal cybersecurity system detecting phishing threats across Text, URLs, and Visual Screenshots.</strong>
+    <strong>Advanced multimodal cybersecurity platform detecting phishing threats across Text, URLs, and Visual Screenshots.</strong>
   </p>
 
   <p>
