@@ -80,7 +80,9 @@ class ModelRegistry:
                     cache_dir=cache_dir,
                 )
             except Exception as e:
-                logger.info("Quantized ONNX not downloaded for %s (%s); will attempt PyTorch fallback", name, e)
+                logger.exception("Quantized ONNX download failed for %s from %s", name, hub_repo)
+                if not path.is_dir():
+                    raise ModelUnavailableError(f"Quantized ONNX model download failed for {name}: {e}") from e
 
         if onnx_file:
             try:
@@ -96,19 +98,17 @@ class ModelRegistry:
                 gc.collect()
                 return tokenizer, sess
             except Exception as exc:
-                logger.warning("Failed initializing ONNX session for %s: %s; falling back to PyTorch", name, exc)
+                logger.exception("Failed initializing ONNX session for %s from %s", name, onnx_file)
+                if not path.is_dir():
+                    raise ModelUnavailableError(f"Failed initializing ONNX session for {name}: {exc}") from exc
 
-        # 2. Fallback to standard PyTorch sequence classification
+        # 2. PyTorch sequence classification (only used when local model directories exist)
         if path.is_dir():
             load_source = str(path)
             local_only = True
             logger.info("Loading %s model from local path: %s", name, path)
-        elif hub_repo:
-            load_source = hub_repo
-            local_only = False
-            logger.info("Loading %s model from Hugging Face Hub: %s", name, hub_repo)
         else:
-            raise ModelUnavailableError(f"{name} model directory not found: {path}")
+            raise ModelUnavailableError(f"{name} model unavailable in cloud environment")
 
         try:
             gc.collect()
