@@ -123,6 +123,17 @@ export default function SiteFooter() {
                 </li>
                 <li>
                   <a
+                    href="https://huggingface.co/xynaxdev"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 text-slate-600 hover:text-amber-600 transition-colors"
+                  >
+                    <span>🤗 HF Model Hub</span>
+                    <ExternalLink className="h-3 w-3 text-slate-400" />
+                  </a>
+                </li>
+                <li>
+                  <a
                     href="https://github.com/XynaxDev/multimodal-phishing-detector"
                     target="_blank"
                     rel="noreferrer"

@@ -242,7 +242,7 @@ const ENDPOINTS = [
     path: "/analyze/text",
     title: "Text & Message Analysis",
     description:
-      "Classifies raw message bodies, suspicious emails, SMS messages, or chat transcripts. Powered by a fine-tuned BERT sequence classifier to detect urgency coercion, credential harvesting triggers, and spoofing signatures.",
+      "Classifies raw message bodies, suspicious emails, SMS messages, or chat transcripts. Powered by a fine-tuned BERT sequence classifier (hosted on Hugging Face: xynaxdev/ph5-text-bert, served via quantized INT8 ONNX for <20ms latency).",
     parameters: [
       {
         name: "text",
@@ -319,7 +319,7 @@ console.log("Served by:", data.llm_provider, data.llm_model);`,
     path: "/analyze/url",
     title: "URL Threat Classification",
     description:
-      "Analyzes full URLs, domains, and suspicious hostnames across 3 distinct classes: Benign, Phishing, and Malware payloads using a fine-tuned DistilBERT classifier.",
+      "Analyzes full URLs, domains, and suspicious hostnames across 3 distinct classes: Benign, Phishing, and Malware payloads using a fine-tuned DistilBERT classifier (hosted on Hugging Face: xynaxdev/ph5-url-distilbert, served via quantized INT8 ONNX).",
     parameters: [
       {
         name: "url",
@@ -392,7 +392,7 @@ console.log(data);`,
     path: "/analyze/image",
     title: "Screenshot & OCR Analysis",
     description:
-      "Visual phishing detection for webpage screenshots and fake login portals using ResNet-50 computer vision combined with automated OCR extraction.",
+      "Visual phishing detection for webpage screenshots and fake login portals using ResNet-50 computer vision (hosted on Hugging Face: xynaxdev/ph5-image-resnet50) combined with automated OCR extraction.",
     parameters: [
       {
         name: "file",
