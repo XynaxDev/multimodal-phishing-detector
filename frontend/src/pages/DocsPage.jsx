@@ -1433,23 +1433,29 @@ console.log(data);`;
                     </div>
                   </div>
 
-                  <div className="relative rounded-lg bg-slate-950 border border-slate-900 p-4 shadow-sm overflow-hidden">
-                    <Tooltip content="Copy integration code snippet" position="left">
+                  <div className="relative rounded-lg bg-slate-950 border border-slate-900 p-4 shadow-sm overflow-hidden group">
+                    <div className="absolute top-2.5 right-2.5 z-20">
                       <button
                         onClick={() =>
                           copyToClipboard(generateByokSnippet(activeCodeTab), "byok_snippet")
                         }
-                        className="absolute top-2.5 right-2.5 text-slate-400 hover:text-white p-1 rounded hover:bg-slate-800 transition-colors z-10 cursor-pointer"
-                        aria-label="Copy code"
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-mono font-medium bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/80 shadow-xs transition-all cursor-pointer backdrop-blur-sm active:scale-95"
+                        aria-label="Copy code snippet"
                       >
                         {copiedId === "byok_snippet" ? (
-                          <Check className="h-3.5 w-3.5 text-emerald-400" />
+                          <>
+                            <Check className="h-3 w-3 text-emerald-400" />
+                            <span className="text-emerald-400 font-sans font-semibold">Copied!</span>
+                          </>
                         ) : (
-                          <Copy className="h-3.5 w-3.5" />
+                          <>
+                            <Copy className="h-3 w-3 text-slate-400" />
+                            <span className="font-sans">Copy</span>
+                          </>
                         )}
                       </button>
-                    </Tooltip>
-                    <div className="overflow-x-auto dark-scrollbar pr-6">
+                    </div>
+                    <div className="overflow-x-auto dark-scrollbar pr-20">
                       <HighlightedCode code={generateByokSnippet(activeCodeTab)} />
                     </div>
                   </div>
@@ -1590,8 +1596,8 @@ console.log(data);`;
                     </div>
                   </div>
 
-                  <div className="relative rounded-lg bg-slate-950 border border-slate-900 p-4 shadow-sm overflow-hidden">
-                    <Tooltip content="Copy request example code" position="left">
+                  <div className="relative rounded-lg bg-slate-950 border border-slate-900 p-4 shadow-sm overflow-hidden group">
+                    <div className="absolute top-2.5 right-2.5 z-20">
                       <button
                         onClick={() =>
                           copyToClipboard(
@@ -1599,17 +1605,23 @@ console.log(data);`;
                             "code_sample"
                           )
                         }
-                        className="absolute top-2.5 right-2.5 text-slate-400 hover:text-white p-1 rounded hover:bg-slate-800 transition-colors z-10 cursor-pointer"
-                        aria-label="Copy code"
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-mono font-medium bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/80 shadow-xs transition-all cursor-pointer backdrop-blur-sm active:scale-95"
+                        aria-label="Copy request code"
                       >
                         {copiedId === "code_sample" ? (
-                          <Check className="h-3.5 w-3.5 text-emerald-400" />
+                          <>
+                            <Check className="h-3 w-3 text-emerald-400" />
+                            <span className="text-emerald-400 font-sans font-semibold">Copied!</span>
+                          </>
                         ) : (
-                          <Copy className="h-3.5 w-3.5" />
+                          <>
+                            <Copy className="h-3 w-3 text-slate-400" />
+                            <span className="font-sans">Copy</span>
+                          </>
                         )}
                       </button>
-                    </Tooltip>
-                    <div className="overflow-x-auto dark-scrollbar pr-6">
+                    </div>
+                    <div className="overflow-x-auto dark-scrollbar pr-20">
                       <HighlightedCode
                         code={currentEndpoint[activeCodeTab](effectiveBaseUrl)}
                       />
@@ -1624,35 +1636,40 @@ console.log(data);`;
                       Response Payload
                     </h3>
                     <div className="flex items-center gap-2">
-                      <Tooltip content="Copy JSON response payload" position="top">
-                        <button
-                          onClick={() =>
-                            copyToClipboard(
-                              typeof currentEndpoint.responseBody === "string"
-                                ? currentEndpoint.responseBody
-                                : JSON.stringify(currentEndpoint.responseBody, null, 2),
-                              "response_json"
-                            )
-                          }
-                          className="inline-flex items-center gap-1 text-[11px] font-mono text-slate-400 hover:text-white px-2 py-0.5 rounded hover:bg-slate-800 transition-colors cursor-pointer"
-                          aria-label="Copy JSON response"
-                        >
-                          {copiedId === "response_json" ? (
-                            <Check className="h-3 w-3 text-emerald-400" />
-                          ) : (
-                            <Copy className="h-3 w-3" />
-                          )}
-                          <span>{copiedId === "response_json" ? "Copied" : "Copy JSON"}</span>
-                        </button>
-                      </Tooltip>
                       <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-mono font-bold bg-emerald-600 text-white shadow-2xs">
                         200 OK
                       </span>
                     </div>
                   </div>
 
-                  <div className="rounded-lg bg-slate-950 border border-slate-900 p-4 shadow-sm overflow-hidden">
-                    <div className="overflow-x-auto dark-scrollbar max-h-96">
+                  <div className="relative rounded-lg bg-slate-950 border border-slate-900 p-4 shadow-sm overflow-hidden group">
+                    <div className="absolute top-2.5 right-2.5 z-20">
+                      <button
+                        onClick={() =>
+                          copyToClipboard(
+                            typeof currentEndpoint.responseBody === "string"
+                              ? currentEndpoint.responseBody
+                              : JSON.stringify(currentEndpoint.responseBody, null, 2),
+                            "response_json"
+                          )
+                        }
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-mono font-medium bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/80 shadow-xs transition-all cursor-pointer backdrop-blur-sm active:scale-95"
+                        aria-label="Copy response JSON"
+                      >
+                        {copiedId === "response_json" ? (
+                          <>
+                            <Check className="h-3 w-3 text-emerald-400" />
+                            <span className="text-emerald-400 font-sans font-semibold">Copied!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="h-3 w-3 text-slate-400" />
+                            <span className="font-sans">Copy JSON</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                    <div className="overflow-x-auto dark-scrollbar max-h-96 pr-24">
                       <HighlightedJson data={currentEndpoint.responseBody} />
                     </div>
                   </div>
