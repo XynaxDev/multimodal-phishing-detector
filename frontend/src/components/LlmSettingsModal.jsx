@@ -115,12 +115,27 @@ export default function LlmSettingsModal({ isOpen, onClose, onConfigSaved }) {
   const isCustomConfigActive = Boolean(activeConfig && activeConfig.apiKey);
   const activeMeta = isCustomConfigActive ? getProviderMeta(activeConfig.provider) : null;
 
-  // Lock page scroll while open (with scrollbar space reserved via CSS) and close on Escape.
+  // Lock page scroll on mobile and desktop while open, and close on Escape.
   useEffect(() => {
     if (!isOpen) return undefined;
+
     const onKey = (e) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+
+    const prevBodyOverflow = document.body.style.overflow;
+    const prevHtmlOverflow = document.documentElement.style.overflow;
+    const prevTouchAction = document.body.style.touchAction;
+
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.touchAction = "none";
+
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prevBodyOverflow;
+      document.documentElement.style.overflow = prevHtmlOverflow;
+      document.body.style.touchAction = prevTouchAction;
+    };
   }, [isOpen, onClose]);
 
   useEffect(() => {
@@ -302,40 +317,39 @@ export default function LlmSettingsModal({ isOpen, onClose, onConfigSaved }) {
   return createPortal(
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 overflow-y-auto overscroll-contain">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
             onClick={onClose}
-            className="absolute inset-0 bg-slate-900/55"
+            className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs sm:backdrop-blur-sm"
           />
 
           <motion.div
             role="dialog"
             aria-modal="true"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 8 }}
+            initial={{ opacity: 0, y: 8, scale: 0.99 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 8, scale: 0.99 }}
             transition={{ duration: 0.18, ease: "easeOut" }}
-            className="relative z-10 flex w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl"
-            style={{ maxHeight: "calc(100vh - 2rem)" }}
+            className="relative z-10 isolate flex w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-2xl my-auto max-h-[calc(100dvh-1.25rem)] sm:max-h-[min(88dvh,42rem)]"
           >
             {/* Header */}
-            <div className="flex shrink-0 items-center justify-between border-b border-slate-100 px-6 py-4">
-              <div className="flex items-center gap-2.5">
-                <div className="rounded-xl border border-orange-200/60 bg-orange-50 p-2 text-orange-600">
+            <div className="flex shrink-0 items-center justify-between border-b border-slate-100 bg-white px-4 py-3 sm:px-6 sm:py-3.5">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="rounded-xl border border-orange-200/60 bg-orange-50 p-1.5 sm:p-2 text-orange-600 shrink-0">
                   <Key className="h-4 w-4" />
                 </div>
-                <div>
-                  <h3 className="text-base font-bold text-slate-900">Bring Your Own LLM</h3>
-                  <p className="text-xs text-slate-500">Configure or verify your personal provider key</p>
+                <div className="min-w-0">
+                  <h3 className="text-sm sm:text-base font-bold text-slate-900 truncate">Bring Your Own LLM</h3>
+                  <p className="text-[11px] sm:text-xs text-slate-500 truncate">Configure or verify your personal provider key</p>
                 </div>
               </div>
               <button
                 onClick={onClose}
-                className="rounded-lg p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 cursor-pointer"
+                className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 cursor-pointer shrink-0 ml-2"
                 aria-label="Close dialog"
               >
                 <X className="h-5 w-5" />
@@ -343,7 +357,7 @@ export default function LlmSettingsModal({ isOpen, onClose, onConfigSaved }) {
             </div>
 
             {/* Body */}
-            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-6">
+            <div className="min-h-0 flex-1 space-y-3 sm:space-y-4 overflow-y-auto overscroll-contain touch-pan-y p-3.5 sm:p-6 bg-white">
               {/* Currently Active Engine Status Bar */}
               {(() => {
                 const activeTheme = getProviderTheme(
@@ -351,11 +365,11 @@ export default function LlmSettingsModal({ isOpen, onClose, onConfigSaved }) {
                   !isCustomConfigActive
                 );
                 return (
-                  <div className={`rounded-xl border p-3 transition-colors ${activeTheme.bgLight} ${activeTheme.border}`}>
-                    <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
+                  <div className={`rounded-xl border p-2.5 sm:p-3 transition-colors ${activeTheme.bgLight} ${activeTheme.border}`}>
+                    <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap sm:flex-nowrap">
                       {/* Active Status Badge in front of the text */}
                       <span
-                        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold shrink-0 border shadow-2xs ${
+                        className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold shrink-0 border shadow-2xs ${
                           !isCustomConfigActive
                             ? "border-emerald-200 bg-emerald-100 text-emerald-800"
                             : activeTheme.badge
@@ -366,12 +380,12 @@ export default function LlmSettingsModal({ isOpen, onClose, onConfigSaved }) {
                       </span>
 
                       {/* Currently Active Text & Details */}
-                      <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                      <div className="flex items-center gap-1.5 flex-wrap min-w-0 flex-1">
                         <span className="text-[11px] font-medium text-slate-500 shrink-0">Currently Active:</span>
                         <span className="text-xs font-bold text-slate-900 shrink-0">
                           {isCustomConfigActive ? activeMeta?.name || activeConfig.provider : "Groq"}
                         </span>
-                        <span className="rounded bg-white/90 px-1.5 py-0.5 font-mono text-[11px] text-slate-700 border border-slate-200/90 truncate max-w-[200px] sm:max-w-[260px]">
+                        <span className="rounded bg-white px-1.5 py-0.5 font-mono text-[10px] sm:text-[11px] text-slate-700 border border-slate-200/90 truncate max-w-[140px] xs:max-w-[190px] sm:max-w-[260px]">
                           {isCustomConfigActive ? activeConfig.model : "qwen/qwen3.8-27b"}
                         </span>
                       </div>
@@ -382,7 +396,7 @@ export default function LlmSettingsModal({ isOpen, onClose, onConfigSaved }) {
 
               {/* Provider Selection (Uniform cards + Tooltips) */}
               <div>
-                <div className="mb-2 flex items-center justify-between">
+                <div className="mb-1.5 sm:mb-2 flex items-center justify-between">
                   <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
                     Provider
                   </label>
@@ -391,7 +405,7 @@ export default function LlmSettingsModal({ isOpen, onClose, onConfigSaved }) {
                   </span>
                 </div>
 
-                <div className="rounded-2xl border border-slate-200/90 bg-slate-50/70 p-2.5 sm:p-3 shadow-2xs">
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-2 sm:p-3 shadow-2xs">
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-2.5">
                     {PROVIDERS.map((p) => {
                       const selected = provider === p.id;
@@ -401,19 +415,19 @@ export default function LlmSettingsModal({ isOpen, onClose, onConfigSaved }) {
                           key={p.id}
                           type="button"
                           onClick={() => changeProvider(p.id)}
-                          className={`h-[78px] w-full flex flex-col justify-between rounded-xl border p-2.5 text-left text-xs transition-all cursor-pointer backdrop-blur-xs ${
+                          className={`h-[72px] sm:h-[78px] w-full flex flex-col justify-between rounded-xl border p-2 sm:p-2.5 text-left transition-all cursor-pointer ${
                             selected
-                              ? `${style.selectedBg} ${style.selectedBorder} ${style.selectedText} font-bold shadow-xs scale-[1.01]`
-                              : "border-slate-200/90 bg-white/95 text-slate-700 hover:bg-white hover:border-slate-300 hover:shadow-2xs"
+                              ? `${style.selectedBg} ${style.selectedBorder} ${style.selectedText} font-bold shadow-xs`
+                              : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:shadow-2xs"
                           }`}
                         >
-                          <div className="flex items-center justify-between gap-1.5 w-full">
-                            <div className="flex items-center gap-1.5 min-w-0">
+                          <div className="flex items-center justify-between gap-1 w-full">
+                            <div className="flex items-center gap-1.5 min-w-0 flex-1">
                               <ProviderIcon
                                 id={p.id}
                                 className={`h-3.5 w-3.5 shrink-0 ${selected ? style.iconColor : "text-slate-500"}`}
                               />
-                              <span className="font-bold text-xs tracking-tight truncate">{p.name}</span>
+                              <span className="font-bold text-[11px] sm:text-xs tracking-tight truncate">{p.name}</span>
                             </div>
                             {selected && (
                               <Check className={`h-3.5 w-3.5 shrink-0 stroke-[2.5] ${style.iconColor}`} />
@@ -472,13 +486,13 @@ export default function LlmSettingsModal({ isOpen, onClose, onConfigSaved }) {
                     placeholder={meta.keyPlaceholder}
                     autoComplete="off"
                     spellCheck={false}
-                    className={`w-full rounded-xl border py-2.5 pl-3.5 pr-10 font-mono text-xs text-slate-900 outline-none placeholder:text-slate-400 transition-colors ${
+                    className={`w-full rounded-xl border py-2 sm:py-2.5 pl-3.5 pr-10 font-mono text-xs text-slate-900 outline-none placeholder:text-slate-400 transition-colors ${
                       check.state === "fail" && !apiKey.trim()
                         ? "border-red-400 bg-red-50/20 ring-1 ring-red-400 focus:border-red-500 focus:ring-red-500"
-                        : "border-slate-200 bg-slate-50/70 focus:border-orange-500 focus:bg-white focus:ring-1 focus:ring-orange-500"
+                        : "border-slate-200 bg-slate-50 focus:border-orange-500 focus:bg-white focus:ring-1 focus:ring-orange-500"
                     }`}
                   />
-                  <div className="absolute right-3 top-2.5">
+                  <div className="absolute right-3 top-2 sm:top-2.5">
                     <button
                       type="button"
                       onClick={() => setShowKey(!showKey)}
@@ -523,7 +537,7 @@ export default function LlmSettingsModal({ isOpen, onClose, onConfigSaved }) {
                       value={model}
                       onChange={(e) => onModelChange(e.target.value)}
                       placeholder={firstModel(meta)}
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50/70 py-2.5 pl-9 pr-3.5 font-mono text-xs text-slate-900 outline-none placeholder:text-slate-400 focus:border-orange-500 focus:bg-white focus:ring-1 focus:ring-orange-500"
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 sm:py-2.5 pl-9 pr-3.5 font-mono text-xs text-slate-900 outline-none placeholder:text-slate-400 focus:border-orange-500 focus:bg-white focus:ring-1 focus:ring-orange-500"
                     />
                   </div>
                 ) : (
@@ -531,7 +545,7 @@ export default function LlmSettingsModal({ isOpen, onClose, onConfigSaved }) {
                     value={model}
                     onValueChange={onModelChange}
                   >
-                    <SelectTrigger className="h-10 w-full rounded-xl border-slate-200 bg-slate-50/70 px-3.5 py-2 text-xs text-slate-900 focus:bg-white">
+                    <SelectTrigger className="h-9.5 sm:h-10 w-full rounded-xl border-slate-200 bg-slate-50 px-3.5 py-2 text-xs text-slate-900 focus:bg-white">
                       <SelectValue placeholder="Select a model" />
                     </SelectTrigger>
                     <SelectContent className="max-h-72 w-[var(--radix-select-trigger-width)] min-w-[340px] max-w-[90vw]">
@@ -579,7 +593,7 @@ export default function LlmSettingsModal({ isOpen, onClose, onConfigSaved }) {
                     value={baseUrl}
                     onChange={(e) => onBaseUrlChange(e.target.value)}
                     placeholder="http://localhost:11434/v1"
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2.5 font-mono text-xs text-slate-900 outline-none placeholder:text-slate-400 focus:border-orange-500 focus:bg-white focus:ring-1 focus:ring-orange-500"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 sm:py-2.5 font-mono text-xs text-slate-900 outline-none placeholder:text-slate-400 focus:border-orange-500 focus:bg-white focus:ring-1 focus:ring-orange-500"
                   />
                 </div>
               )}
@@ -605,42 +619,42 @@ export default function LlmSettingsModal({ isOpen, onClose, onConfigSaved }) {
             </div>
 
             {/* Footer */}
-            <div className="flex shrink-0 items-center justify-between gap-3 border-t border-slate-100 bg-slate-50 px-6 py-4">
+            <div className="flex shrink-0 items-center justify-between gap-2 sm:gap-3 border-t border-slate-100 bg-slate-50 px-4 py-3 sm:px-6 sm:py-3.5">
               <button
                 type="button"
                 onClick={handleReset}
-                className="inline-flex items-center gap-1.5 text-xs text-slate-500 transition-colors hover:text-slate-800 cursor-pointer"
+                className="inline-flex items-center gap-1 sm:gap-1.5 text-xs text-slate-500 transition-colors hover:text-slate-800 cursor-pointer"
               >
-                <RotateCcw className="h-3.5 w-3.5" />
+                <RotateCcw className="h-3.5 w-3.5 shrink-0" />
                 <span>Use shared</span>
               </button>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={onClose} className="text-xs cursor-pointer">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <Button variant="outline" size="sm" onClick={onClose} className="h-8.5 px-3 text-xs cursor-pointer">
                   Cancel
                 </Button>
                 <Button
                   size="sm"
                   onClick={handleSave}
                   disabled={saving || done}
-                  className="min-w-[8.5rem] bg-[#E83C00] px-4 text-xs font-semibold text-white hover:bg-[#d03600] cursor-pointer"
+                  className="h-8.5 min-w-[7.5rem] sm:min-w-[8.5rem] bg-[#E83C00] px-3 sm:px-4 text-xs font-semibold text-white hover:bg-[#d03600] cursor-pointer"
                 >
-                    {done ? (
-                      <>
-                        <Check className="mr-1 h-3.5 w-3.5" />
-                        <span>Activated</span>
-                      </>
-                    ) : saving ? (
-                      <>
-                        <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
-                        <span>Verifying</span>
-                      </>
-                    ) : (
-                      <>
-                        <ShieldCheck className="mr-1 h-3.5 w-3.5" />
-                        <span>Verify &amp; Activate</span>
-                      </>
-                    )}
-                  </Button>
+                  {done ? (
+                    <>
+                      <Check className="mr-1 h-3.5 w-3.5" />
+                      <span>Activated</span>
+                    </>
+                  ) : saving ? (
+                    <>
+                      <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
+                      <span>Verifying</span>
+                    </>
+                  ) : (
+                    <>
+                      <ShieldCheck className="mr-1 h-3.5 w-3.5" />
+                      <span>Verify &amp; Activate</span>
+                    </>
+                  )}
+                </Button>
               </div>
             </div>
           </motion.div>
