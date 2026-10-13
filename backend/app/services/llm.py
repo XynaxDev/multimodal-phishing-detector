@@ -46,21 +46,21 @@ Evaluate the input alongside preliminary classifier signals to produce a calibra
 Rules:
 - For URLs: Distinguish legitimate profiles, repositories, articles, and services (e.g. GitHub, Wikipedia, StackOverflow, Medium, Docs, Google) from actual lookalike domains, credential harvesters, or malware distribution links. Do not penalize URLs simply because they contain paths or slashes.
 - For SMS/Text: Distinguish authentic transactional notifications/OTPs (which advise 'never share', contain no deceptive links, and ask for nothing) from social engineering, urgency coercion, and credential theft traps.
-- For Images/OCR: Use OCR text and image classifier signals to explain brand imitation or legitimate site designs.
+- For Images/OCR: Use OCR text and image classifier signals. If no OCR text is present, NEVER invent or fabricate brands, URLs, login forms, or password fields.
 
-Return valid JSON with exactly this format:
-{
-  "verdict": "benign" | "phishing" | "malware",
-  "probs": {"benign": float, "phishing": float, "malware": float},
-  "explanation": "1-2 summary sentences followed by 2-3 bullet points with technical signals and practical safety advice."
-}"""
+Format requirements:
+- If Mode is 'url': Return {"verdict": "benign" | "phishing" | "malware", "probs": {"benign": float, "phishing": float, "malware": float}, "explanation": "..."}
+- If Mode is 'text' or 'image': Return {"verdict": "benign" | "phishing", "probs": {"benign": float, "phishing": float}, "explanation": "..."} (do NOT include malware for text or images)
+
+Return valid JSON with 1-2 summary sentences followed by 2-3 bullet points with technical signals and practical safety advice."""
 
 EXPLAIN_SYSTEM_PROMPT = """You are CyberGuardian, a friendly cybersecurity assistant inside the PH5 phishing detector.
 Your only job is to explain the detection result produced by PH5's trained classifiers.
 
 Rules:
 - NEVER invent information. Do not assume what an image or message contains unless OCR/text is provided.
-- NEVER fabricate URLs, senders, brands or login pages.
+- NEVER fabricate URLs, senders, brands, login pages, or credential harvesting forms.
+- If an image has no OCR text, state clearly that no brand names, logos, or login fields were detected in the image, and note that PH5's visual model is fine-tuned specifically for digital webpage screenshots.
 - Use ONLY the probabilities supplied. If they are close, say the evidence is uncertain.
 - Do not contradict the model's final label.
 - Tone: clear, calm, helpful, slightly conversational.
@@ -311,6 +311,8 @@ class LLMService:
                 if verdict in ("benign", "phishing", "malware"):
                     c_probs = data.get("probs")
                     if isinstance(c_probs, dict) and "benign" in c_probs:
+                        if mode != "url":
+                            c_probs.pop("malware", None)
                         total = sum(c_probs.values()) or 1.0
                         c_probs = {k: round(v / total, 4) for k, v in c_probs.items()}
                         if mode == "url" and "malware" not in c_probs:

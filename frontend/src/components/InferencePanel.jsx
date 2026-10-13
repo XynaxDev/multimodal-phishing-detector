@@ -701,58 +701,63 @@ export default function InferencePanel({ data, loading, mode, onClear, cooldownS
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-6">
         <div className="rounded-2xl border bg-card overflow-hidden">
           {/* Header */}
-          <div className="flex items-center justify-between px-5 py-4 border-b">
+          <div className="flex flex-wrap items-center justify-between gap-2.5 px-3.5 py-3 sm:px-5 sm:py-4 border-b">
             <h2 className="text-sm font-semibold flex items-center gap-2">
               {isChatMode ? (
-                <MessageCircle className="h-4 w-4 text-orange-500" />
+                <MessageCircle className="h-4 w-4 text-orange-500 shrink-0" />
               ) : (
-                <ShieldCheck className="h-4 w-4 text-orange-500" />
+                <ShieldCheck className="h-4 w-4 text-orange-500 shrink-0" />
               )}
-              {isChatMode ? "Analysis Result" : "Detection Result"}
+              <span>{isChatMode ? "Analysis Result" : "Detection Result"}</span>
               {data.intent && (
-                <span className="ml-1 text-xs font-normal px-2 py-1 border rounded-md bg-gray-50">
+                <span className="ml-1 text-[11px] font-normal px-2 py-0.5 border rounded-md bg-gray-50 text-slate-600">
                   {data.intent.replace("_", " ")}
                 </span>
               )}
             </h2>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               {processingTime && (
                 <motion.span
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="text-xs text-muted-foreground flex items-center gap-1"
+                  className="text-xs text-muted-foreground flex items-center gap-1 font-mono"
                 >
                   <Clock className="h-3 w-3" />
                   {(processingTime / 1000).toFixed(2)}s
                 </motion.span>
               )}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2">
                 <Button 
                   variant="destructive" 
                   size="sm" 
-                  className="h-8 px-3 text-xs font-medium bg-red-500 hover:bg-red-600 text-white border-0 shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-1.5 cursor-pointer"
+                  className="h-7.5 px-2.5 sm:px-3 text-xs font-medium bg-red-500 hover:bg-red-600 text-white border-0 shadow-2xs hover:shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
                   onClick={handleClearResults}
                 >
-                  <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
-                  Clear Results
+                  <span>Clear Results</span>
                 </Button>
-                <Tooltip content="Copy response JSON" position="top">
-                  <Button variant="ghost" size="icon" className="h-7 w-7 cursor-pointer" onClick={handleCopy}>
-                    <AnimatePresence mode="wait">
-                      {copied ? (
-                        <motion.div key="check" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}>
-                          <Check className="h-3.5 w-3.5 text-emerald-500" />
-                        </motion.div>
-                      ) : (
-                        <motion.div key="copy" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}>
-                          <Copy className="h-3.5 w-3.5" />
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </Button>
-                </Tooltip>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7.5 w-7.5 border border-gray-200/80 bg-white/60 hover:bg-white cursor-pointer rounded-lg shrink-0"
+                  onClick={handleCopy}
+                  aria-label="Copy response JSON"
+                  title="Copy response JSON"
+                >
+                  <AnimatePresence mode="wait">
+                    {copied ? (
+                      <motion.div key="check" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}>
+                        <Check className="h-3.5 w-3.5 text-emerald-500" />
+                      </motion.div>
+                    ) : (
+                      <motion.div key="copy" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}>
+                        <Copy className="h-3.5 w-3.5 text-slate-600" />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </Button>
               </div>
             </div>
           </div>
@@ -875,14 +880,30 @@ export default function InferencePanel({ data, loading, mode, onClear, cooldownS
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="mt-2 rounded-xl border bg-muted/10 p-4 relative"
+                  className="mt-2 rounded-xl border bg-muted/10 p-3 sm:p-4 relative group"
                 >
-                  <Tooltip content="Copy raw response JSON" position="left">
-                    <Button variant="ghost" size="icon" className="absolute top-3 right-3 h-7 w-7 cursor-pointer" onClick={handleCopy}>
-                      {copied ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
+                  <div className="absolute top-2.5 right-2.5 z-10">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 px-2 text-xs gap-1 bg-white hover:bg-gray-50 border-gray-200/90 shadow-2xs cursor-pointer text-slate-700"
+                      onClick={handleCopy}
+                      aria-label="Copy JSON"
+                    >
+                      {copied ? (
+                        <>
+                          <Check className="h-3.5 w-3.5 text-emerald-600" />
+                          <span className="text-[11px] font-medium text-emerald-600">Copied</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="h-3.5 w-3.5 text-slate-600" />
+                          <span className="text-[11px] font-medium">Copy</span>
+                        </>
+                      )}
                     </Button>
-                  </Tooltip>
-                  <pre className="max-h-56 overflow-auto text-xs leading-relaxed font-mono pr-10 text-muted-foreground">
+                  </div>
+                  <pre className="max-h-60 overflow-auto text-xs leading-relaxed font-mono pt-8 sm:pt-6 pr-4 text-muted-foreground select-text">
                     {JSON.stringify(data, null, 2)}
                   </pre>
                 </motion.div>

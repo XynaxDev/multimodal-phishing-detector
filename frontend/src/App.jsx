@@ -21,14 +21,25 @@ import NotFoundPage from "./pages/NotFoundPage";
 
 // Home Page Component
 function HomePage() {
-  const [mode, setMode] = useState("text");
+  const [mode, setMode] = useState("emails");
   const [query, setQuery] = useState("");
   const [file, setFile] = useState(null);
-  const [result, setResult] = useState(null);
+  const [resultsByMode, setResultsByMode] = useState({
+    sms: null,
+    emails: null,
+    urls: null,
+    script: null,
+    images: null,
+    chat: null,
+    text: null,
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
   const [isLlmModalOpen, setIsLlmModalOpen] = useState(false);
   const [customLlmConfig, setCustomLlmConfig] = useState(getCustomLLMConfig());
+
+  // Active result strictly isolated to the currently selected mode
+  const activeResult = resultsByMode[mode] || null;
 
   // Dynamic countdown timer when provider cooldown is active
   useEffect(() => {
@@ -36,8 +47,14 @@ function HomePage() {
     const interval = setInterval(() => {
       setCooldownSeconds((prev) => {
         if (prev <= 1) {
-          // Cooldown finished: clear rate limit status so user can retry immediately
-          setResult((r) => (r?.isRateLimit ? null : r));
+          // Cooldown finished: clear rate limit status across modes so user can retry immediately
+          setResultsByMode((prevResults) => {
+            const next = { ...prevResults };
+            for (const m of Object.keys(next)) {
+              if (next[m]?.isRateLimit) next[m] = null;
+            }
+            return next;
+          });
           return 0;
         }
         return prev - 1;
@@ -53,23 +70,24 @@ function HomePage() {
 
   async function run() {
     if (cooldownSeconds > 0) return;
+    const currentMode = mode;
     setIsLoading(true);
-    setResult(null);
+    setResultsByMode((prev) => ({ ...prev, [currentMode]: null }));
 
     try {
       let response;
-      if (mode === "urls") {
+      if (currentMode === "urls") {
         response = await urlCheck(query);
-      } else if (mode === "images") {
+      } else if (currentMode === "images") {
         if (!file) {
           alert("Upload image first!");
           setIsLoading(false);
           return;
         }
         response = await imageCheckFile(file);
-      } else if (mode === "chat") {
+      } else if (currentMode === "chat") {
         response = await chatMultipart(query, file);
-      } else if (mode === "script") {
+      } else if (currentMode === "script") {
         response = await textCheck(query);
       } else {
         response = await textCheck(query);
@@ -77,13 +95,13 @@ function HomePage() {
 
       console.log("API Response:", response);
       console.log("Response Data:", response.data);
-      setResult(response.data);
+      setResultsByMode((prev) => ({ ...prev, [currentMode]: response.data }));
     } catch (err) {
       console.error("API Error:", err);
       const rateLimit = parseRateLimitError(err);
       if (rateLimit) {
         setCooldownSeconds(rateLimit.cooldownSeconds);
-        setResult(rateLimit);
+        setResultsByMode((prev) => ({ ...prev, [currentMode]: rateLimit }));
       } else {
         const errData = err?.response?.data;
         let msg =
@@ -110,7 +128,10 @@ function HomePage() {
           msg =
             "The free-tier cloud host (Render 512MB RAM cap) hit a momentary memory limit while processing this image and is auto-recovering (~5-10s). Images are automatically optimized before upload. Click Retry Analysis below!";
         }
-        setResult({ error: msg, isTimeout, isNetworkError });
+        setResultsByMode((prev) => ({
+          ...prev,
+          [currentMode]: { error: msg, isTimeout, isNetworkError },
+        }));
       }
     } finally {
       setIsLoading(false);
@@ -118,7 +139,7 @@ function HomePage() {
   }
 
   const clearResults = () => {
-    setResult(null);
+    setResultsByMode((prev) => ({ ...prev, [mode]: null }));
     setQuery("");
     setFile(null);
   };
@@ -152,7 +173,7 @@ function HomePage() {
 
             <section className="mt-10">
               <InferencePanel
-                data={result}
+                data={activeResult}
                 loading={isLoading}
                 mode={mode}
                 onClear={clearResults}

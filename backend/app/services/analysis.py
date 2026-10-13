@@ -114,10 +114,41 @@ class AnalysisService:
         ocr_text = self.ocr.extract(img)
         del img
         gc.collect()
-        verdict, probs, expl, src, provider, model, cooldown = self.llm.evaluate_and_explain(
-            mode="image", content="Screenshot landing page", raw_probs=raw_probs, ocr_text=ocr_text, config=config
-        )
-        score = probs.get("phishing", 0.0)
+
+        # Strict binary probabilities directly from ResNet-50 visual model
+        p_phish = float(raw_probs.get("phishing", 0.5))
+        p_benign = float(raw_probs.get("benign", 1.0 - p_phish))
+        probs = {"benign": round(p_benign, 4), "phishing": round(p_phish, 4)}
+
+        # If OCR text was detected on image, evaluate text content with LLM
+        if ocr_text and ocr_text.strip():
+            verdict, probs, expl, src, provider, model, cooldown = self.llm.evaluate_and_explain(
+                mode="image",
+                content=f"Screenshot with extracted text: {ocr_text[:300]}",
+                raw_probs=probs,
+                ocr_text=ocr_text,
+                config=config,
+            )
+            # Ensure no malware key leaks into image mode
+            probs.pop("malware", None)
+            total = sum(probs.values()) or 1.0
+            probs = {k: round(v / total, 4) for k, v in probs.items()}
+            score = probs.get("phishing", p_phish)
+        else:
+            # No OCR text detected (e.g. personal photo, camera capture, or non-text image)
+            verdict = "phishing" if p_phish >= 0.5 else "benign"
+            score = p_phish
+            summary = {
+                "mode": "image",
+                "label": verdict,
+                "phishing_score": score,
+                "probs": probs,
+                "ocr_status": "No text, brand logos, or login forms detected in image.",
+            }
+            expl, src, provider, model, cooldown = self.llm.explain(
+                summary, ocr_text=None, config=config
+            )
+
         return {
             "mode": "image", "label": verdict, "phishing_score": score, "probs": probs, "ocr": ocr_text,
             "explanation": expl, "explanation_source": src, "latency_ms": _ms(start),
