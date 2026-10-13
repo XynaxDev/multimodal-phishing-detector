@@ -109,8 +109,10 @@ graph TD
 All routes are versioned under `/api/v1` and document full interactive Swagger schemas at `/docs`.
 
 ### Base URLs
+* **Live Web App**: [`https://ph5-live.vercel.app`](https://ph5-live.vercel.app)
+* **Production API**: [`https://ph5-api.onrender.com/api/v1`](https://ph5-api.onrender.com/api/v1)
+* **Interactive Swagger Docs**: [`https://ph5-api.onrender.com/docs`](https://ph5-api.onrender.com/docs)
 * **Local Development**: `http://localhost:8000/api/v1`
-* **Production**: `https://<your-render-app>.onrender.com/api/v1`
 
 ---
 
@@ -384,8 +386,9 @@ docker run -p 8000:8000 \
 
 Detailed step-by-step production deployment instructions are documented in [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
 
-* **Backend**: Hosted on **Render** (via `backend/Dockerfile` and `render.yaml`) or **Hugging Face Spaces** (Free 16GB RAM).
-* **Frontend**: Hosted on **Vercel** with automatic SPA routing via `frontend/vercel.json`. Set `VITE_API_BASE=https://<your-backend>.onrender.com/api/v1`.
+* **Live Web Dashboard**: Hosted on **Vercel** at [`https://ph5-live.vercel.app`](https://ph5-live.vercel.app).
+* **Production API**: Hosted on **Render** at [`https://ph5-api.onrender.com`](https://ph5-api.onrender.com) (Swagger Docs: [`/docs`](https://ph5-api.onrender.com/docs)).
+* **Model Distribution**: Quantized INT8 ONNX & PyTorch checkpoints distributed via [Hugging Face Model Hub](https://huggingface.co/xynaxdev).
 
 ---
 
