@@ -72,6 +72,19 @@ Evaluation results conducted across held-out test splits:
 | **Phishing** | 99.18% | 99.43% | 99.30% | 7,182 |
 | **Malware** | 99.65% | 99.05% | 99.35% | 7,500 |
 
+### 🤗 Hugging Face Model Hub & ONNX Edge Artifacts
+
+All model checkpoints are publicly hosted on Hugging Face with dual-format distribution: original unquantized PyTorch checkpoints for academic reproducibility alongside ultra-compact INT8 ONNX models for sub-20ms edge deployment:
+
+| Modality | Architecture | Deployment Format | Size | Hugging Face Repository | Benchmark Concordance |
+|:---|:---|:---:|:---:|:---|:---:|
+| **URL Threat** | DistilBERT 3-Class | **ONNX INT8** | **64.27 MB** | [`xynaxdev/ph5-url-distilbert`](https://huggingface.co/xynaxdev/ph5-url-distilbert) | **>99.9%** (diff < 0.0001 vs FP32) |
+| **Message Text** | Fine-Tuned BERT | **ONNX INT8** | **105.21 MB** | [`xynaxdev/ph5-text-bert`](https://huggingface.co/xynaxdev/ph5-text-bert) | **>99.9%** concordance |
+| **Screenshot Vision** | ResNet-50 Vision | **PyTorch** | **94.00 MB** | [`xynaxdev/ph5-image-resnet50`](https://huggingface.co/xynaxdev/ph5-image-resnet50) | 78.99% Test, 83.30% Val |
+
+* **Latency**: Measured at **~7 ms** on single-core CPU for URL inference (vs 45 ms in PyTorch).
+* **Memory Footprint**: Active container memory is **~35-40 MB** for ONNX runtime (compared to >530 MB in eager PyTorch), ensuring 0 OOM errors on constrained edge cloud tiers.
+
 ---
 
 ## 🛠️ Tech Stack

@@ -43,16 +43,17 @@ export default function NavBar({ onOpenLlmSettings }) {
             Docs
           </Link>
 
-          <a
-            href="https://huggingface.co/xynaxdev"
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-1 sm:gap-1.5 rounded-full border border-amber-200/90 bg-amber-50/70 hover:bg-amber-100/70 px-2 sm:px-3 py-1 text-xs font-medium text-amber-950 shadow-2xs hover:border-amber-300 transition-all shrink-0"
-            title="View Hugging Face Models"
-          >
-            <span className="text-sm leading-none">🤗</span>
-            <span className="hidden sm:inline font-semibold">Models</span>
-          </a>
+          <Tooltip content="Hugging Face Model Hub — Explore trained model checkpoints" position="bottom">
+            <a
+              href="https://huggingface.co/xynaxdev"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1 sm:gap-1.5 rounded-full border border-amber-200/90 bg-amber-50/70 hover:bg-amber-100/70 px-2 sm:px-3 py-1 text-xs font-medium text-amber-950 shadow-2xs hover:border-amber-300 transition-all shrink-0 cursor-pointer"
+            >
+              <span className="text-sm leading-none">🤗</span>
+              <span className="hidden sm:inline font-semibold">Models</span>
+            </a>
+          </Tooltip>
 
           <a
             href="https://github.com/XynaxDev/multimodal-phishing-detector"
