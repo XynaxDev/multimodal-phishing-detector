@@ -60,6 +60,8 @@ logs/
 data/
 /data/
 **/data/
+!frontend/src/data/
+!frontend/src/data/**
 raw/
 /raw/
 **/raw/
