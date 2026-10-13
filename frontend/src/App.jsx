@@ -46,6 +46,11 @@ function HomePage() {
     return () => clearInterval(interval);
   }, [cooldownSeconds]);
 
+  // Proactive background ping to wake up free-tier cloud container on page load
+  useEffect(() => {
+    fetch("/api/v1/health").catch(() => {});
+  }, []);
+
   async function run() {
     if (cooldownSeconds > 0) return;
     setIsLoading(true);
@@ -81,13 +86,20 @@ function HomePage() {
         setResult(rateLimit);
       } else {
         const errData = err?.response?.data;
-        const msg =
+        let msg =
           typeof errData?.detail === "string"
             ? errData.detail
             : typeof errData?.error === "string"
             ? errData.error
             : err.message;
-        setResult({ error: msg });
+        const isTimeout =
+          err.code === "ECONNABORTED" ||
+          (typeof msg === "string" && msg.toLowerCase().includes("timeout"));
+        if (isTimeout) {
+          msg =
+            "Backend was waking up from free-tier sleep (Render cold start). The service is now warm! Click Retry to get results in <400ms.";
+        }
+        setResult({ error: msg, isTimeout });
       }
     } finally {
       setIsLoading(false);
@@ -135,6 +147,7 @@ function HomePage() {
                 onClear={clearResults}
                 cooldownSeconds={cooldownSeconds}
                 onOpenLlmSettings={() => setIsLlmModalOpen(true)}
+                onRetry={run}
               />
             </section>
 

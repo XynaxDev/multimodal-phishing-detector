@@ -180,7 +180,7 @@ function TimeElapsed({ startTime }) {
   return <span className="tabular-nums text-muted-foreground">{seconds}s</span>
 }
 
-export default function InferencePanel({ data, loading, mode, onClear, cooldownSeconds = 0, onOpenLlmSettings }) {
+export default function InferencePanel({ data, loading, mode, onClear, cooldownSeconds = 0, onOpenLlmSettings, onRetry }) {
   const [copied, setCopied] = useState(false)
   const [isJsonOpen, setIsJsonOpen] = useState(false)
   const [processingTime, setProcessingTime] = useState(null)
@@ -354,10 +354,17 @@ export default function InferencePanel({ data, loading, mode, onClear, cooldownS
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.25 }}
-                className="mt-3 flex items-center gap-1.5 text-xs"
+                className="mt-3 flex flex-wrap items-center justify-center gap-2 text-xs"
               >
-                <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
-                {loadingStartRef.current && <TimeElapsed startTime={loadingStartRef.current} />}
+                <div className="flex items-center gap-1.5 text-muted-foreground">
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  {loadingStartRef.current && <TimeElapsed startTime={loadingStartRef.current} />}
+                </div>
+                {processingTime > 5000 && (
+                  <span className="text-amber-800 bg-amber-50 border border-amber-200/80 px-2.5 py-0.5 rounded-full text-[11px] font-medium shadow-2xs">
+                    Waking up cloud container on Render...
+                  </span>
+                )}
               </motion.div>
             )}
           </div>
@@ -538,14 +545,26 @@ export default function InferencePanel({ data, loading, mode, onClear, cooldownS
 
   // Error state
   if (isError) {
+    const isTimeout = Boolean(data?.isTimeout || (typeof data?.error === "string" && data.error.toLowerCase().includes("timeout")));
     return (
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-6">
         <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-5">
-          <h2 className="text-sm font-semibold flex items-center gap-2 text-destructive">
-            <AlertTriangle className="h-4 w-4" />
-            Analysis Failed
-          </h2>
-          <p className="mt-2 text-sm text-destructive/80">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <h2 className="text-sm font-semibold flex items-center gap-2 text-destructive">
+              <AlertTriangle className="h-4 w-4 shrink-0" />
+              <span>{isTimeout ? "Cloud Server Waking Up" : "Analysis Failed"}</span>
+            </h2>
+            {onRetry && (
+              <Button
+                size="sm"
+                onClick={onRetry}
+                className="bg-orange-600 hover:bg-orange-700 text-white text-xs font-semibold h-7 px-3 shadow-2xs cursor-pointer inline-flex items-center gap-1"
+              >
+                <span>Retry Analysis</span>
+              </Button>
+            )}
+          </div>
+          <p className="mt-2 text-sm text-destructive/80 leading-relaxed">
             {typeof data.error === "string" ? data.error : "An unexpected error occurred"}
           </p>
         </div>

@@ -65,7 +65,7 @@ export function clearByokSelection() {
 
 const api = axios.create({
   baseURL: API_BASE,
-  timeout: 60_000,
+  timeout: 120_000,
 });
 
 // Auto-attach custom BYO-LLM credentials to outgoing requests
