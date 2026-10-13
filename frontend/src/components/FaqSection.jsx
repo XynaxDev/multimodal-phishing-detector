@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ChevronDown, Shield, Zap, Globe, Brain, Lock, Sparkles, ArrowRight } from "lucide-react";
 import SendMatrixIcon from "./ui/SendMatrixIcon";
+import ModelPillsSection from "./ModelPillsSection";
 
 const faqs = [
   {
@@ -221,20 +222,8 @@ function FeaturesSection() {
           })}
         </div>
 
-        {/* Bottom Banner */}
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5, duration: 0.3 }}
-          viewport={{ once: true }}
-          className="text-center mt-10"
-        >
-          <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-orange-50 border border-orange-200/80 text-orange-700 text-xs sm:text-sm font-semibold shadow-2xs">
-            <Sparkles className="h-4 w-4 text-orange-600 shrink-0" />
-            <span>Powered by Advanced Multimodal AI Technology</span>
-            <SendMatrixIcon className="h-3.5 w-3.5 fill-current text-orange-600 shrink-0 ml-0.5" />
-          </div>
-        </motion.div>
+        {/* Open Source Model Hub & Edge Architecture Section (Apple Style) */}
+        <ModelPillsSection />
       </div>
     </section>
   );
