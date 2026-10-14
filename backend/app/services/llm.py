@@ -24,6 +24,22 @@ logger = logging.getLogger("ph5.llm")
 
 _THINK_RE = re.compile(r"<think>.*?</think>", flags=re.S | re.I)
 
+
+def _clean_json_text(text: str) -> str:
+    """Extract valid JSON object from raw LLM output, stripping markdown fences or reasoning wrappers."""
+    if not text:
+        return ""
+    t = text.strip()
+    t = _THINK_RE.sub("", t).strip()
+    m = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", t, re.DOTALL)
+    if m:
+        return m.group(1).strip()
+    first = t.find("{")
+    last = t.rfind("}")
+    if first != -1 and last != -1 and last > first:
+        return t[first : last + 1].strip()
+    return t
+
 DEFAULT_PROVIDER_URLS = {
     "groq": "https://api.groq.com/openai/v1",
     "openai": "https://api.openai.com/v1",
@@ -67,9 +83,10 @@ Rules:
 - Format: one or two summary sentences, then 2-4 short bullet points with signals and practical safety advice.
 Return only the explanation."""
 
-CHAT_SYSTEM_PROMPT = """You are CyberGuardian, the assistant of PH5, a multimodal phishing detector.
-PH5 can check URLs, email/SMS text and screenshots for phishing. Reply in 2-4 friendly sentences
-about staying safe online and how to use PH5. Do not make up facts or claim to have analysed anything."""
+CHAT_SYSTEM_PROMPT = """You are CyberGuardian, the cybersecurity assistant inside the PH5 multimodal phishing detection system.
+PH5 checks URLs, email/SMS messages, and screenshots using fine-tuned neural models (DistilBERT, BERT, ResNet-50) paired with LLM reasoning.
+Reply in 2-4 complete, helpful, and friendly sentences about cybersecurity, online safety, or using PH5.
+Always complete your sentences and thoughts fully."""
 
 INTENT_SYSTEM_PROMPT = """You are an intent classifier for a cybersecurity chatbot. Do NOT answer the user.
 Return EXACTLY one label from: chat, url_check, text_message, image_check.
@@ -195,7 +212,7 @@ class LLMService:
             "messages": messages,
             "temperature": self.settings.llm_temperature if temperature is None else temperature,
         }
-        _tok = max_tokens or min(self.settings.llm_max_tokens, 350)
+        _tok = max_tokens or min(self.settings.llm_max_tokens, 1024)
         payload["max_completion_tokens" if provider == "openai" else "max_tokens"] = _tok
         if json_response:
             payload["response_format"] = {"type": "json_object"}
@@ -295,7 +312,7 @@ class LLMService:
         try:
             out = self.complete(
                 [{"role": "system", "content": ARBITER_SYSTEM_PROMPT}, {"role": "user", "content": user_msg}],
-                max_tokens=400,
+                max_tokens=1024,
                 temperature=0.1,
                 json_response=True,
                 config=config,
@@ -306,7 +323,7 @@ class LLMService:
 
         if out:
             try:
-                data = json.loads(out)
+                data = json.loads(_clean_json_text(out))
                 verdict = str(data.get("verdict", "")).lower()
                 if verdict in ("benign", "phishing", "malware"):
                     c_probs = data.get("probs")
@@ -372,6 +389,7 @@ class LLMService:
         try:
             out = self.complete(
                 [{"role": "system", "content": CHAT_SYSTEM_PROMPT}, {"role": "user", "content": query}],
+                max_tokens=800,
                 temperature=0.4,
                 config=config,
             )

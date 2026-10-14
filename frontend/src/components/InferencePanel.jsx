@@ -358,14 +358,14 @@ export default function InferencePanel({ data, loading, mode, onClear, cooldownS
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.25 }}
-                className="mt-3 flex flex-wrap items-center justify-center gap-2 text-xs"
+                className="mt-2.5 flex flex-col items-center justify-center gap-2 text-xs"
               >
-                <div className="flex items-center gap-1.5 text-muted-foreground">
+                <div className="flex items-center gap-1.5 text-muted-foreground font-mono">
                   <Loader2 className="h-3 w-3 animate-spin" />
                   {loadingStartRef.current && <TimeElapsed startTime={loadingStartRef.current} />}
                 </div>
                 {processingTime > 5000 && (
-                  <span className="text-amber-800 bg-amber-50 border border-amber-200/80 px-2.5 py-0.5 rounded-full text-[11px] font-medium shadow-2xs">
+                  <span className="text-amber-800 bg-amber-50 border border-amber-200/80 px-2.5 py-0.5 rounded-full text-[11px] font-medium shadow-2xs animate-pulse">
                     Waking up cloud container on Render...
                   </span>
                 )}

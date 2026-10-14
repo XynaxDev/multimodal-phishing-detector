@@ -29,6 +29,7 @@ import {
   setByokSelection,
   fetchProviderModels,
   verifyProviderKey,
+  formatErrorMessage,
 } from "../api";
 import {
   LLM_PROVIDERS as PROVIDERS,
@@ -232,7 +233,7 @@ export default function LlmSettingsModal({ isOpen, onClose, onConfigSaved }) {
     const res = await fetchProviderModels({ provider, apiKey: apiKey.trim(), baseUrl: baseUrl.trim() });
     setFetching(false);
     if (res.ok) setFetched(res.models);
-    else setCheck({ state: "fail", reason: res.reason });
+    else setCheck({ state: "fail", reason: formatErrorMessage(res.reason) });
   };
 
   // Models shown after the user's key is loaded: everything their account can list,
@@ -277,11 +278,11 @@ export default function LlmSettingsModal({ isOpen, onClose, onConfigSaved }) {
     });
 
     if (!res.ok) {
-      setCheck({ state: "fail", reason: res.reason || "Verification failed. Check your API key." });
+      setCheck({ state: "fail", reason: formatErrorMessage(res.reason || "Verification failed. Check your API key.") });
       return;
     }
 
-    setCheck({ state: "ok", reason: res.reason });
+    setCheck({ state: "ok", reason: formatErrorMessage(res.reason) });
     const newConfig = {
       provider,
       apiKey: apiKey.trim(),

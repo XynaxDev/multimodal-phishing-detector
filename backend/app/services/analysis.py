@@ -26,7 +26,10 @@ _EMAIL_HINTS = (
 )
 _URL_QUESTION_HINTS = (
     "is this site", "is this link", "is this url", "is this website", "link safe", "site safe",
-    "check this link", "check url", "is https", "is http",
+    "check this link", "check url", "check this url", "analyze this url", "analyze url",
+    "analyze this link", "analyze link", "scan url", "scan link", "is this phishing",
+    "is it phishing", "phishing?", "phishing??", "is https", "is http", "url safe",
+    "verify url", "verify link", "test url", "test link",
 )
 _GREETINGS = {"hi", "hello", "hey", "how are you", "how are you?"}
 
@@ -235,13 +238,15 @@ class AnalysisService:
             return "chat"
         ql = q.lower()
         looks_like_email = any(h in ql for h in _EMAIL_HINTS) or ("http" in ql and len(ql) > 200)
-        if extract_single_url(q):
-            if looks_like_email or len(q) > self.settings.short_url_threshold:
+        url_candidate = extract_single_url(q)
+        if url_candidate:
+            if looks_like_email:
                 return "text_message"
             if any(h in ql for h in _URL_QUESTION_HINTS):
                 return "url_check"
-            tokens = q.split()
-            if len(tokens) <= 3 and any("." in t or t.startswith("http") for t in tokens):
+            # If the user input is primarily the URL or a question about the URL
+            non_url = q.replace(url_candidate, "").strip()
+            if len(non_url) <= 120:
                 return "url_check"
             return "text_message"
         if looks_like_email:
@@ -277,7 +282,11 @@ class AnalysisService:
                 intent = "text_message"
                 result = self.analyze_text(query, config=config)
         elif intent == "text_message":
-            result = self.analyze_text(query, config=config)
+            embedded_url = extract_single_url(query)
+            if embedded_url and len(query) > len(embedded_url) + 15:
+                result = self.analyze_multimodal(text=query, url=embedded_url, image_bytes=None, content_type=None, config=config)
+            else:
+                result = self.analyze_text(query, config=config)
         else:
             reply, src, provider, model, cooldown = self.llm.chat_reply(query or "hello", config=config)
             return {

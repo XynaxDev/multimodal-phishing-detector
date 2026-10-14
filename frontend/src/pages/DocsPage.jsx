@@ -1034,11 +1034,11 @@ console.log(data);`;
           </p>
 
           {/* Minimalist Base URL Bar */}
-          <div className="mt-5 inline-flex items-center gap-3 rounded-lg border border-slate-200 bg-white px-3.5 py-2 shadow-2xs max-w-full">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 select-none">
+          <div className="mt-5 inline-flex items-center gap-2.5 sm:gap-3 rounded-lg border border-slate-200 bg-white px-3.5 py-2 shadow-2xs max-w-full">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 select-none shrink-0">
               Base URL
             </span>
-            <code className="text-xs sm:text-sm font-mono font-semibold text-slate-800 truncate">
+            <code className="text-xs sm:text-sm font-mono font-semibold text-slate-800 break-all select-all">
               {effectiveBaseUrl}
             </code>
             <Tooltip content="Copy Base API URL" position="top">
@@ -1474,10 +1474,10 @@ console.log(data);`;
           ) : (
               /* STANDARD ENDPOINT CARD */
               <div className="rounded-xl border border-slate-200 bg-white p-5 sm:p-6 shadow-2xs">
-                <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-100">
-                  <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-100 min-w-0">
+                  <div className="flex items-center flex-wrap gap-2.5 min-w-0 max-w-full">
                     <span
-                      className={`text-xs font-bold font-mono px-2.5 py-1 rounded-md uppercase tracking-wide text-white shadow-2xs ${
+                      className={`text-xs font-bold font-mono px-2.5 py-1 rounded-md uppercase tracking-wide text-white shadow-2xs shrink-0 ${
                         currentEndpoint.method === "POST"
                           ? "bg-emerald-600"
                           : "bg-blue-600"
@@ -1485,7 +1485,7 @@ console.log(data);`;
                     >
                       {currentEndpoint.method}
                     </span>
-                    <code className="text-sm font-mono font-semibold text-slate-800">
+                    <code className="text-sm font-mono font-semibold text-slate-800 break-all select-all">
                       {effectiveBaseUrl}
                       {currentEndpoint.path}
                     </code>
@@ -1499,7 +1499,7 @@ console.log(data);`;
                           "endpoint_path"
                         )
                       }
-                      className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
+                      className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-800 transition-colors cursor-pointer shrink-0"
                     >
                       {copiedId === "endpoint_path" ? (
                         <>
@@ -1532,8 +1532,8 @@ console.log(data);`;
                   </h3>
 
                   {currentEndpoint.parameters.length > 0 ? (
-                    <div className="overflow-hidden rounded-lg border border-slate-200/80">
-                      <table className="w-full text-left text-xs">
+                    <div className="overflow-x-auto rounded-lg border border-slate-200/80">
+                      <table className="w-full text-left text-xs min-w-[520px]">
                         <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200/80">
                           <tr>
                             <th className="py-2.5 px-3">Field</th>
@@ -1686,8 +1686,8 @@ console.log(data);`;
                 PH5 uses standard HTTP status codes to communicate outcome states. Dynamic cooldown headers (Retry-After) prevent crashes during traffic spikes.
               </p>
 
-              <div className="overflow-hidden rounded-lg border border-slate-200/80">
-                <table className="w-full text-left text-xs">
+              <div className="overflow-x-auto rounded-lg border border-slate-200/80">
+                <table className="w-full text-left text-xs min-w-[420px]">
                   <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200/80">
                     <tr>
                       <th className="py-2.5 px-3 w-60 whitespace-nowrap">Status Code</th>

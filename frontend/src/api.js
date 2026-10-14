@@ -86,10 +86,53 @@ function bareHeaders({ apiKey, baseUrl }) {
   return h;
 }
 
+export function formatErrorMessage(raw) {
+  if (!raw) return "Request failed";
+  if (typeof raw !== "string") {
+    try {
+      if (Array.isArray(raw) && raw.length > 0) {
+        return formatErrorMessage(raw[0]);
+      }
+      if (typeof raw === "object") {
+        if (raw.error) return formatErrorMessage(raw.error);
+        if (raw.message) return String(raw.message);
+        if (raw.detail) return formatErrorMessage(raw.detail);
+      }
+    } catch (_) {}
+  }
+
+  let str = String(raw).trim();
+
+  // If str is a JSON string e.g. '[{"error": ...}]' or '{"error": ...}'
+  if ((str.startsWith("[") && str.endsWith("]")) || (str.startsWith("{") && str.endsWith("}"))) {
+    try {
+      const parsed = JSON.parse(str);
+      return formatErrorMessage(parsed);
+    } catch (_) {}
+  }
+
+  // Common timeout strings
+  if (/timeout of \d+ms exceeded/i.test(str) || /ECONNABORTED/i.test(str)) {
+    return "Request timed out. The server or AI provider took too long to respond. Please check your network and retry.";
+  }
+
+  // Upstream 503 high demand friendly message
+  if (str.includes("experiencing high demand") || str.includes("UNAVAILABLE")) {
+    return "This model is currently experiencing high demand upstream. Spikes in demand are usually temporary. Please try another model or retry in a few moments.";
+  }
+
+  return str;
+}
+
 function readError(err) {
-  const d = err?.response?.data?.detail;
-  if (typeof d === "string") return d;
-  return err?.message || "Request failed";
+  if (err?.code === "ECONNABORTED" || /timeout/i.test(err?.message || "")) {
+    return "Request timed out. The server or AI provider took too long to respond. Please check your network and retry.";
+  }
+  const detail = err?.response?.data?.detail;
+  if (detail) return formatErrorMessage(detail);
+  const data = err?.response?.data;
+  if (data) return formatErrorMessage(data);
+  return formatErrorMessage(err?.message || "Request failed");
 }
 
 // Uses a bare axios call so the stored BYO-LLM interceptor can't override the key being tested.
@@ -98,7 +141,7 @@ export async function fetchProviderModels({ provider, apiKey, baseUrl }) {
     const res = await axios.get(`${API_BASE}/llm/models`, {
       params: { provider },
       headers: bareHeaders({ apiKey, baseUrl }),
-      timeout: 30_000,
+      timeout: 90_000,
     });
     return { ok: true, models: res.data.models || [] };
   } catch (err) {
@@ -111,8 +154,11 @@ export async function verifyProviderKey({ provider, model, apiKey, baseUrl }) {
     const res = await axios.post(`${API_BASE}/llm/verify`, null, {
       params: { provider, model },
       headers: bareHeaders({ apiKey, baseUrl }),
-      timeout: 60_000,
+      timeout: 90_000,
     });
+    if (res.data && res.data.reason) {
+      res.data.reason = formatErrorMessage(res.data.reason);
+    }
     return res.data;
   } catch (err) {
     return { ok: false, status: err?.response?.status || 0, reason: readError(err) };

@@ -13,7 +13,7 @@ from app.services.llm import DEFAULT_PROVIDER_URLS
 
 router = APIRouter(prefix="/llm", tags=["LLM"])
 
-_TIMEOUT = 25
+_TIMEOUT = 45
 # Name fragments of non-chat models that must not be offered for text analysis.
 _NON_CHAT = (
     "whisper", "tts", "orpheus", "embed", "moderation", "image", "dall-e", "realtime",
@@ -40,11 +40,23 @@ def _auth(key: str) -> Dict[str, str]:
 
 def _provider_error(resp: requests.Response) -> str:
     try:
-        err = resp.json().get("error", resp.json())
-        msg = err.get("message") if isinstance(err, dict) else str(err)
+        data = resp.json()
+        if isinstance(data, list) and len(data) > 0:
+            data = data[0]
+        if isinstance(data, dict):
+            err = data.get("error", data)
+            if isinstance(err, dict):
+                msg = err.get("message") or err.get("detail") or str(err)
+            else:
+                msg = str(err)
+        else:
+            msg = str(data)
     except Exception:
         msg = resp.text
-    return (msg or f"HTTP {resp.status_code}")[:240]
+    clean_msg = (msg or f"HTTP {resp.status_code}").strip()
+    if "experiencing high demand" in clean_msg.lower() or "unavailable" in clean_msg.lower():
+        return "This model is currently experiencing high demand upstream. Spikes in demand are usually temporary. Please try another model or retry shortly."
+    return clean_msg[:240]
 
 
 @router.get("/models", summary="List chat models available to your API key")
@@ -58,7 +70,7 @@ def list_models(
     try:
         r = requests.get(f"{base}/models", headers=_auth(api_key), timeout=_TIMEOUT)
     except requests.RequestException:
-        raise HTTPException(status_code=502, detail="Could not reach the provider.")
+        raise HTTPException(status_code=502, detail="Could not reach the provider. Request timed out or provider is unreachable.")
     if r.status_code in (401, 403):
         raise HTTPException(status_code=401, detail="The provider rejected this API key.")
     if not r.ok:
@@ -91,18 +103,23 @@ def verify(
     provider = provider.lower().strip()
     base = _base(provider, base_url)
     body = {"model": model, "messages": [{"role": "user", "content": "Reply with OK"}]}
-    # Newer OpenAI / reasoning models reject max_tokens; give reasoning room to finish.
-    body["max_completion_tokens" if provider == "openai" else "max_tokens"] = 64
+    # Newer OpenAI / reasoning / Gemini models need enough token allowance to complete reasoning.
+    body["max_completion_tokens" if provider == "openai" else "max_tokens"] = 256
     try:
-        r = requests.post(f"{base}/chat/completions", headers=_auth(api_key), json=body, timeout=_TIMEOUT + 20)
+        r = requests.post(f"{base}/chat/completions", headers=_auth(api_key), json=body, timeout=_TIMEOUT + 25)
     except requests.RequestException:
-        return {"ok": False, "status": 0, "reason": "Could not reach the provider."}
+        return {"ok": False, "status": 0, "reason": "Could not reach the provider within timeout. Network may be slow or provider unresponsive."}
 
     if r.ok:
         try:
             payload = r.json()
+            if isinstance(payload, list) and len(payload) > 0:
+                payload = payload[0]
             if isinstance(payload, dict) and "error" in payload:
-                err_msg = payload["error"].get("message", "Upstream error.")
+                err_val = payload["error"]
+                err_msg = err_val.get("message", "Upstream error.") if isinstance(err_val, dict) else str(err_val)
+                if "experiencing high demand" in err_msg.lower() or "unavailable" in err_msg.lower():
+                    err_msg = "This model is currently experiencing high demand upstream. Please try another model or retry shortly."
                 return {"ok": False, "status": 502, "reason": f"Model error: {err_msg[:200]}"}
         except Exception:
             pass
@@ -124,6 +141,8 @@ def verify(
         reason = "Model not found or not available to this key."
     elif r.status_code == 429:
         reason = "Key is valid but currently rate-limited or out of quota/credits."
+    elif r.status_code == 503 or "experiencing high demand" in prov_err.lower():
+        reason = "This model is currently experiencing high demand upstream. Spikes in demand are usually temporary. Please try another model or retry shortly."
     else:
         reason = prov_err
     return {"ok": False, "status": r.status_code, "reason": reason}
